@@ -100,4 +100,4 @@ src/
 Project ini dibuat untuk tujuan pembelajaran dan portfolio pribadi.
 
 ---
-*Dibuat dengan ❤️ oleh Arkan*
+*Dibuat kopi oleh Arkan*
