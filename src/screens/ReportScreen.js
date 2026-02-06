@@ -14,6 +14,7 @@ import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } fro
 import { globalStyles } from '../styles/globalStyles';
 import TransactionCard from '../components/TransactionCard';
 import { getTransactions, getCategories } from '../utils/storage';
+import { exportToCSV, exportToTextReport, exportSummaryReport } from '../utils/exportService';
 import { 
   formatCurrency,
   getCurrentMonth,
@@ -27,10 +28,14 @@ import {
   getMonthlySpendingTrend,
   getMonthName
 } from '../utils/calculations';
+import { getLast6MonthsTrend, getCategoryDistribution } from '../utils/aggregators';
+import TrendChart from '../components/TrendChart';
+import CategoryPieChart from '../components/CategoryPieChart';
 
 const screenWidth = Dimensions.get('window').width;
 
 const ReportScreen = ({ navigation }) => {
+  const [viewMode, setViewMode] = useState('summary'); // 'summary', 'analytics'
   const [activeTab, setActiveTab] = useState('monthly'); // 'daily', 'monthly', 'yearly'
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -59,6 +64,18 @@ const ReportScreen = ({ navigation }) => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
+  };
+
+  const handleExportCSV = async () => {
+    await exportToCSV(transactions, categories);
+  };
+
+  const handleExportReport = async () => {
+    await exportToTextReport(transactions, categories);
+  };
+
+  const handleExportSummary = async () => {
+    await exportSummaryReport(transactions, categories);
   };
 
   const getCategoryById = (id) => categories.find(c => c.id === id);
@@ -292,35 +309,113 @@ const ReportScreen = ({ navigation }) => {
     );
   };
 
+  const renderAnalytics = () => {
+    // Analytics Data
+    const trendData = getLast6MonthsTrend(transactions);
+    const categoryDistMonth = getCategoryDistribution(transactions, categories, getCurrentMonth());
+
+    return (
+      <View>
+        <Text style={styles.sectionTitle}>Analisis Pengeluaran</Text>
+        
+        {/* Trend Chart */}
+        <TrendChart data={trendData.data} labels={trendData.labels} />
+
+        {/* Distribution Chart */}
+        <CategoryPieChart data={categoryDistMonth.data} />
+
+        {/* Insights Card */}
+        <View style={styles.insightCard}>
+          <Text style={styles.insightTitle}>💡 Insight Keuangan</Text>
+          <Text style={styles.insightText}>
+            • Pengeluaran rata-rata 3 bulan terakhir: {formatCurrency(
+                (trendData.data.slice(3).reduce((a, b) => a + b, 0) / 3) || 0
+              )}
+          </Text>
+          {categoryDistMonth.data.length > 0 && (
+            <Text style={styles.insightText}>
+              • Kategori terboros bulan ini: <Text style={{fontWeight: 'bold'}}>{categoryDistMonth.data[0].name}</Text>
+            </Text>
+          )}
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={globalStyles.container}>
-      {/* Tab Selector */}
-      <View style={styles.tabContainer}>
+      {/* View Mode Selector (Summary vs Analytics) */}
+      <View style={styles.viewModeContainer}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'daily' && styles.tabActive]}
-          onPress={() => setActiveTab('daily')}
+          style={[styles.modeButton, viewMode === 'summary' && styles.modeButtonActive]}
+          onPress={() => setViewMode('summary')}
         >
-          <Text style={[styles.tabText, activeTab === 'daily' && styles.tabTextActive]}>
-            Harian
-          </Text>
+          <Text style={[styles.modeText, viewMode === 'summary' && styles.modeTextActive]}>Ringkasan</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'monthly' && styles.tabActive]}
-          onPress={() => setActiveTab('monthly')}
+          style={[styles.modeButton, viewMode === 'analytics' && styles.modeButtonActive]}
+          onPress={() => setViewMode('analytics')}
         >
-          <Text style={[styles.tabText, activeTab === 'monthly' && styles.tabTextActive]}>
-            Bulanan
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'yearly' && styles.tabActive]}
-          onPress={() => setActiveTab('yearly')}
-        >
-          <Text style={[styles.tabText, activeTab === 'yearly' && styles.tabTextActive]}>
-            Tahunan
-          </Text>
+          <Text style={[styles.modeText, viewMode === 'analytics' && styles.modeTextActive]}>Analisis</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Show Tabs only if in Summary mode */}
+      {viewMode === 'summary' && (
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'daily' && styles.tabActive]}
+            onPress={() => setActiveTab('daily')}
+          >
+            <Text style={[styles.tabText, activeTab === 'daily' && styles.tabTextActive]}>
+              Harian
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'monthly' && styles.tabActive]}
+            onPress={() => setActiveTab('monthly')}
+          >
+            <Text style={[styles.tabText, activeTab === 'monthly' && styles.tabTextActive]}>
+              Bulanan
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'yearly' && styles.tabActive]}
+            onPress={() => setActiveTab('yearly')}
+          >
+            <Text style={[styles.tabText, activeTab === 'yearly' && styles.tabTextActive]}>
+              Tahunan
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Export Buttons (Only in Summary) */}
+      {viewMode === 'summary' && (
+        <View style={styles.exportContainer}>
+          <Text style={styles.exportTitle}>📤 Export Data</Text>
+          <View style={styles.exportButtons}>
+            <TouchableOpacity
+              style={[styles.exportButton, { backgroundColor: '#4CAF50' }]}
+              onPress={handleExportCSV}
+            >
+              <Text style={styles.exportButtonText}>📊 CSV</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.exportButton, { backgroundColor: '#2196F3' }]}
+              onPress={handleExportReport}
+            >
+              <Text style={styles.exportButtonText}>📄 Laporan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.exportButton, { backgroundColor: '#FF9800' }]}
+              onPress={handleExportSummary}
+            >
+              <Text style={styles.exportButtonText}>📈 Ringkasan</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -328,9 +423,15 @@ const ReportScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {activeTab === 'daily' && renderDailyReport()}
-        {activeTab === 'monthly' && renderMonthlyReport()}
-        {activeTab === 'yearly' && renderYearlyReport()}
+        {viewMode === 'summary' ? (
+          <>
+            {activeTab === 'daily' && renderDailyReport()}
+            {activeTab === 'monthly' && renderMonthlyReport()}
+            {activeTab === 'yearly' && renderYearlyReport()}
+          </>
+        ) : (
+          renderAnalytics()
+        )}
       </ScrollView>
     </View>
   );
@@ -493,6 +594,74 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: FONT_SIZES.md,
     color: COLORS.textSecondary,
+  },
+  exportContainer: {
+    backgroundColor: COLORS.surface,
+    padding: SPACING.md,
+    ...SHADOWS.small,
+  },
+  exportTitle: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+  },
+  exportButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  exportButton: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    alignItems: 'center',
+  },
+  exportButtonText: {
+    color: COLORS.textLight,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.semibold,
+  },
+  viewModeContainer: {
+    flexDirection: 'row',
+    padding: SPACING.md,
+    backgroundColor: COLORS.surface,
+  },
+  modeButton: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    alignItems: 'center',
+    borderRadius: BORDER_RADIUS.pill,
+    backgroundColor: COLORS.background,
+    marginHorizontal: 4,
+  },
+  modeButtonActive: {
+    backgroundColor: COLORS.primary,
+  },
+  modeText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  modeTextActive: {
+    color: COLORS.textLight,
+  },
+  insightCard: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  insightTitle: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: 'bold',
+    color: '#1565C0',
+    marginBottom: SPACING.sm,
+  },
+  insightText: {
+    fontSize: FONT_SIZES.sm,
+    color: '#0D47A1',
+    lineHeight: 20,
+    marginBottom: 4,
   },
 });
 

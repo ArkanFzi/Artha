@@ -1,92 +1,108 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../styles/theme';
-import { formatCurrency, formatDateShort } from '../utils/calculations';
+import { useTheme } from '../contexts/ThemeContext';
+import { formatCurrency } from '../utils/currency';
+import { formatDateShort } from '../utils/calculations';
 
 const TransactionCard = ({ transaction, category, onPress }) => {
+  const { theme, isDark } = useTheme();
   const isIncome = transaction.type === 'income';
-  const amountColor = isIncome ? COLORS.income : COLORS.expense;
-  const amountPrefix = isIncome ? '+' : '-';
+  
+  // Minimalist, no heavy borders
+  // Background is transparent or very subtle to blend with list
+  
+  const containerStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.divider,
+  };
+
+  const iconBackgroundColor = category?.color ? 
+    (isDark ? `${category.color}20` : `${category.color}15`) : 
+    (isDark ? 'rgba(255,255,255,0.05)' : '#F3F4F6');
 
   return (
     <TouchableOpacity 
-      style={styles.container} 
+      style={containerStyle} 
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.6}
     >
-      <View style={styles.leftSection}>
-        <View style={[styles.iconContainer, { backgroundColor: category?.color || COLORS.border }]}>
-          <Text style={styles.icon}>{category?.icon || '📦'}</Text>
-        </View>
-        <View style={styles.details}>
-          <Text style={styles.description} numberOfLines={1}>
-            {transaction.description || 'No description'}
-          </Text>
-          <Text style={styles.category}>{category?.name || 'Unknown'}</Text>
-          <Text style={styles.date}>{formatDateShort(transaction.date || transaction.createdAt)}</Text>
-        </View>
+      {/* Icon with soft background */}
+      <View style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}>
+        <Text style={styles.icon}>{category?.icon || '📦'}</Text>
       </View>
-      <View style={styles.rightSection}>
-        <Text style={[styles.amount, { color: amountColor }]}>
-          {amountPrefix} {formatCurrency(transaction.amount)}
-        </Text>
+
+      <View style={styles.details}>
+        <View style={styles.topRow}>
+          <Text style={[styles.description, { color: theme.text }]} numberOfLines={1}>
+            {transaction.description || category?.name || 'Transaksi'}
+          </Text>
+          <Text 
+            style={[
+              styles.amount, 
+              { color: isIncome ? theme.success : theme.text }
+            ]}
+          >
+            {isIncome ? '+' : ''} {formatCurrency(transaction.amount, transaction.currency)}
+          </Text>
+        </View>
+
+        <View style={styles.bottomRow}>
+          <Text style={[styles.category, { color: theme.textSecondary }]}>
+            {category?.name || 'Umum'} • {formatDateShort(transaction.date || transaction.createdAt)}
+          </Text>
+          {transaction.photoUri && (
+             <Text style={{ fontSize: 10, marginLeft: 4 }}>📸</Text>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    ...SHADOWS.small,
-  },
-  leftSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: 16, // Softer radius
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SPACING.md,
+    marginRight: 16,
   },
   icon: {
-    fontSize: 24,
+    fontSize: 22,
   },
   details: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   description: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text,
-    marginBottom: 2,
-  },
-  category: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    marginBottom: 2,
-  },
-  date: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
-  },
-  rightSection: {
-    alignItems: 'flex-end',
-    marginLeft: SPACING.sm,
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 8,
   },
   amount: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  category: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
 

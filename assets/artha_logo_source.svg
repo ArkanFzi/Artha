@@ -1,0 +1,44 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background: Deep Blue-Black -->
+  <rect width="1024" height="1024" fill="#0A0E27"/>
+  
+  <!-- Definitions for Gradients -->
+  <defs>
+    <linearGradient id="tealGradient" x1="200" y1="200" x2="824" y2="824" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00D9A6"/>
+      <stop offset="1" stop-color="#00897B"/>
+    </linearGradient>
+    
+    <linearGradient id="goldGradient" x1="600" y1="400" x2="800" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD700"/>
+      <stop offset="1" stop-color="#FFC107"/>
+    </linearGradient>
+    
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.5"/>
+      <feComposite in2="blur" operator="in"/>
+      <feComposite in="SourceGraphic" result="shadowed"/>
+    </filter>
+  </defs>
+
+  <!-- Wallet Icon Group -->
+  <g transform="translate(112, 112) scale(0.8)">
+    <!-- Back part of wallet -->
+    <path d="M100 250 H900 V750 H100 Z" fill="#1A1F3A" stroke="#00897B" stroke-width="20" rx="60"/>
+    
+    <!-- Front Flap / Main Body -->
+    <path d="M100 350 H900 V750 H100 Z" fill="url(#tealGradient)" rx="40"/>
+    
+    <!-- Card sticking out -->
+    <path d="M200 280 H800 V350 H200 Z" fill="#64FFDA" opacity="0.8"/>
+    
+    <!-- Gold Clasp/Button -->
+    <circle cx="500" cy="550" r="80" fill="url(#goldGradient)" filter="url(#shadow)"/>
+    <circle cx="500" cy="550" r="60" fill="none" stroke="#B8860B" stroke-width="5"/>
+    
+    <!-- Stitching details -->
+    <path d="M140 390 H860" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="20 20" opacity="0.5"/>
+    <path d="M140 710 H860" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="20 20" opacity="0.5"/>
+  </g>
+</svg>

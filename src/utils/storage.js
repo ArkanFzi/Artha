@@ -4,6 +4,7 @@ const KEYS = {
   TRANSACTIONS: '@transactions',
   CATEGORIES: '@categories',
   BUDGET: '@budget',
+  GOALS: '@goals',
 };
 
 // Transaction operations
@@ -126,6 +127,55 @@ export const getBudget = async () => {
   } catch (error) {
     console.error('Error getting budget:', error);
     return null;
+  }
+};
+
+// Goal operations
+export const saveGoal = async (goal) => {
+  try {
+    const goals = await getGoals();
+    let updatedGoals;
+    
+    if (goal.id) {
+      // Update existing
+      updatedGoals = goals.map(g => g.id === goal.id ? { ...g, ...goal } : g);
+    } else {
+      // Create new
+      const newGoal = {
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        currentAmount: 0,
+        ...goal,
+      };
+      updatedGoals = [...goals, newGoal];
+    }
+    
+    await AsyncStorage.setItem(KEYS.GOALS, JSON.stringify(updatedGoals));
+    return true;
+  } catch (error) {
+    console.error('Error saving goal:', error);
+    throw error;
+  }
+};
+
+export const getGoals = async () => {
+  try {
+    const data = await AsyncStorage.getItem(KEYS.GOALS);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Error getting goals:', error);
+    return [];
+  }
+};
+
+export const deleteGoal = async (id) => {
+  try {
+    const goals = await getGoals();
+    const filtered = goals.filter(g => g.id !== id);
+    await AsyncStorage.setItem(KEYS.GOALS, JSON.stringify(filtered));
+  } catch (error) {
+    console.error('Error deleting goal:', error);
+    throw error;
   }
 };
 

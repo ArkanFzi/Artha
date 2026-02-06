@@ -7,19 +7,23 @@ import {
   TextInput, 
   TouchableOpacity,
   Alert,
-  RefreshControl
+  RefreshControl,
+  Modal
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import { globalStyles } from '../styles/globalStyles';
 import BudgetProgressBar from '../components/BudgetProgressBar';
+import InvestmentCard from '../components/InvestmentCard';
 import { getTransactions, getCategories, getBudget, saveBudget } from '../utils/storage';
 import { 
   formatCurrency,
   getCurrentMonth,
   filterTransactionsByMonth,
   groupExpensesByCategory,
-  calculateBudgetRecommendations
+  calculateBudgetRecommendations,
+  calculateInvestmentRecommendation,
+  getInvestmentSuggestions
 } from '../utils/calculations';
 
 const BudgetScreen = ({ navigation }) => {
@@ -30,6 +34,7 @@ const BudgetScreen = ({ navigation }) => {
   const [categorySpending, setCategorySpending] = useState({});
   const [refreshing, setRefreshing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showInvestmentModal, setShowInvestmentModal] = useState(false);
 
   const loadData = async () => {
     try {
@@ -132,6 +137,15 @@ const BudgetScreen = ({ navigation }) => {
   const totalBudgetAllocated = Object.values(categoryBudgets).reduce((sum, val) => sum + val, 0);
   const remainingBudget = parseFloat(totalIncome || 0) - totalBudgetAllocated;
 
+  // Calculate investment recommendation
+  const investmentData = totalIncome && parseFloat(totalIncome) > 0 && totalBudgetAllocated > 0
+    ? calculateInvestmentRecommendation(parseFloat(totalIncome), totalBudgetAllocated)
+    : null;
+  
+  const investmentSuggestion = investmentData 
+    ? getInvestmentSuggestions(investmentData.percentage)
+    : null;
+
   return (
     <View style={globalStyles.container}>
       <ScrollView
@@ -186,6 +200,14 @@ const BudgetScreen = ({ navigation }) => {
               </Text>
             </View>
           </View>
+        )}
+
+        {/* Investment Card */}
+        {investmentData && investmentSuggestion && (
+          <InvestmentCard
+            investmentData={{ ...investmentData, suggestion: investmentSuggestion }}
+            onPress={() => setShowInvestmentModal(true)}
+          />
         )}
 
         {/* Action Buttons */}
@@ -266,6 +288,85 @@ const BudgetScreen = ({ navigation }) => {
           </View>
         )}
       </ScrollView>
+
+      {/* Investment Modal */}
+      {investmentSuggestion && (
+        <Modal
+          visible={showInvestmentModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowInvestmentModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{investmentSuggestion.title}</Text>
+                <TouchableOpacity onPress={() => setShowInvestmentModal(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll}>
+                <Text style={styles.modalDescription}>{investmentSuggestion.description}</Text>
+
+                {investmentData && (
+                  <View style={styles.investmentStats}>
+                    <View style={styles.statRow}>
+                      <Text style={styles.statLabel}>Sisa Budget:</Text>
+                      <Text style={styles.statValue}>{formatCurrency(investmentData.remainingBudget)}</Text>
+                    </View>
+                    <View style={styles.statRow}>
+                      <Text style={styles.statLabel}>Rekomendasi Investasi:</Text>
+                      <Text style={[styles.statValue, { color: COLORS.primary }]}>
+                        {formatCurrency(investmentData.recommended)}
+                      </Text>
+                    </View>
+                    <View style={styles.statRow}>
+                      <Text style={styles.statLabel}>Minimal (10%):</Text>
+                      <Text style={styles.statValue}>{formatCurrency(investmentData.minInvestment)}</Text>
+                    </View>
+                    <View style={styles.statRow}>
+                      <Text style={styles.statLabel}>Ideal (20%):</Text>
+                      <Text style={styles.statValue}>{formatCurrency(investmentData.idealInvestment)}</Text>
+                    </View>
+                  </View>
+                )}
+
+                <Text style={styles.sectionTitle}>💡 Saran untuk Anda:</Text>
+                {investmentSuggestion.suggestions.map((suggestion, index) => (
+                  <View key={index} style={styles.suggestionItem}>
+                    <Text style={styles.bulletPoint}>•</Text>
+                    <Text style={styles.suggestionText}>{suggestion}</Text>
+                  </View>
+                ))}
+
+                {investmentSuggestion.investmentTypes.length > 0 && (
+                  <>
+                    <Text style={styles.sectionTitle}>📊 Jenis Investasi yang Cocok:</Text>
+                    {investmentSuggestion.investmentTypes.map((type, index) => (
+                      <View key={index} style={styles.investmentTypeCard}>
+                        <Text style={styles.investmentIcon}>{type.icon}</Text>
+                        <View style={styles.investmentTypeInfo}>
+                          <Text style={styles.investmentTypeName}>{type.name}</Text>
+                          <Text style={styles.investmentTypeDetail}>Risiko: {type.risk}</Text>
+                          <Text style={styles.investmentTypeDetail}>Return: {type.return}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </>
+                )}
+
+                <View style={styles.disclaimer}>
+                  <Text style={styles.disclaimerText}>
+                    ⚠️ Disclaimer: Ini hanya saran umum. Lakukan riset sendiri sebelum investasi. 
+                    Investasi memiliki risiko, pastikan Anda memahami risikonya.
+                  </Text>
+                </View>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -431,6 +532,121 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
     paddingHorizontal: SPACING.xl,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: BORDER_RADIUS.xl,
+    borderTopRightRadius: BORDER_RADIUS.xl,
+    paddingTop: SPACING.lg,
+    maxHeight: '85%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  modalTitle: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text,
+    flex: 1,
+  },
+  closeButton: {
+    fontSize: 28,
+    color: COLORS.textSecondary,
+    fontWeight: FONT_WEIGHTS.bold,
+  },
+  modalScroll: {
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  modalDescription: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.lg,
+    lineHeight: 22,
+  },
+  investmentStats: {
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  },
+  statLabel: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+  },
+  statValue: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    marginBottom: SPACING.sm,
+    paddingRight: SPACING.md,
+  },
+  bulletPoint: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.primary,
+    marginRight: SPACING.sm,
+    fontWeight: FONT_WEIGHTS.bold,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.text,
+    lineHeight: 20,
+  },
+  investmentTypeCard: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+    ...SHADOWS.small,
+  },
+  investmentIcon: {
+    fontSize: 32,
+    marginRight: SPACING.md,
+  },
+  investmentTypeInfo: {
+    flex: 1,
+  },
+  investmentTypeName: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
+  },
+  investmentTypeDetail: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
+  },
+  disclaimer: {
+    backgroundColor: '#FFF3CD',
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.xl,
+  },
+  disclaimerText: {
+    fontSize: FONT_SIZES.xs,
+    color: '#856404',
+    lineHeight: 18,
   },
 });
 

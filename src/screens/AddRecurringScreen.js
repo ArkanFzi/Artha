@@ -1,45 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TextInput, 
-  TouchableOpacity,
-  Alert,
-  Platform
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import { globalStyles } from '../styles/globalStyles';
 import CategoryPicker from '../components/CategoryPicker';
-import ImagePickerComponent from '../components/ImagePickerComponent';
-import { saveTransaction, getCategories } from '../utils/storage';
-import { formatCurrency as formatCurrencyCalc } from '../utils/calculations';
-import { CURRENCIES, formatCurrency, getCurrencySymbol } from '../utils/currency';
+import { saveRecurringTransaction } from '../utils/recurringService';
+import { getCategories } from '../utils/storage';
+import { formatCurrency } from '../utils/calculations';
 
-const AddTransactionScreen = ({ navigation }) => {
-  const [type, setType] = useState('expense'); // 'income' or 'expense'
+const AddRecurringScreen = ({ navigation }) => {
+  const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [frequency, setFrequency] = useState('monthly');
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useState('');
   const [categories, setCategories] = useState([]);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [photoUri, setPhotoUri] = useState(null);
-  
-  // Multi-currency state
-  const [currency, setCurrency] = useState(CURRENCIES[0]);
-  const [exchangeRate, setExchangeRate] = useState('1');
-  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
-
-  useEffect(() => {
-    if (currency.code !== 'IDR') {
-      setExchangeRate(currency.rate.toString());
-    } else {
-      setExchangeRate('1');
-    }
-  }, [currency]);
 
   useEffect(() => {
     loadCategories();
@@ -70,30 +47,35 @@ const AddTransactionScreen = ({ navigation }) => {
     }
 
     try {
-      const transaction = {
+      const recurring = {
         type,
         amount: parseFloat(amount),
         description: description.trim(),
         categoryId: type === 'expense' ? selectedCategory?.id : null,
-        date,
+        frequency,
+        startDate,
+        endDate: null,
         notes: notes.trim(),
-        photoUri: photoUri || null,
-        currency: currency.code,
-        exchangeRate: parseFloat(exchangeRate) || 1,
       };
 
-      await saveTransaction(transaction);
+      await saveRecurringTransaction(recurring);
       
       Alert.alert(
         'Berhasil',
-        'Transaksi berhasil disimpan',
+        'Transaksi berulang berhasil dibuat',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (error) {
-      Alert.alert('Error', 'Gagal menyimpan transaksi');
+      Alert.alert('Error', 'Gagal menyimpan transaksi berulang');
       console.error(error);
     }
   };
+
+  const frequencies = [
+    { value: 'daily', label: '📅 Harian', description: 'Setiap hari' },
+    { value: 'weekly', label: '📆 Mingguan', description: 'Setiap minggu' },
+    { value: 'monthly', label: '🗓️ Bulanan', description: 'Setiap bulan' },
+  ];
 
   return (
     <View style={globalStyles.container}>
@@ -133,40 +115,11 @@ const AddTransactionScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Amount Input Section */}
+        {/* Amount Input */}
         <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Jumlah & Mata Uang</Text>
-          
-          {/* Currency Selector */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.currencySelector}
-            contentContainerStyle={styles.currencySelectorContent}
-          >
-            {CURRENCIES.map((c) => (
-              <TouchableOpacity
-                key={c.code}
-                style={[
-                  styles.currencyPill,
-                  currency.code === c.code && styles.currencyPillActive,
-                  { borderColor: currency.code === c.code ? COLORS.primary : COLORS.border }
-                ]}
-                onPress={() => setCurrency(c)}
-              >
-                <Text style={[
-                  styles.currencyPillText,
-                  currency.code === c.code && { color: COLORS.primary, fontWeight: 'bold' }
-                ]}>
-                  {c.code}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* Amount Input */}
+          <Text style={globalStyles.label}>Jumlah</Text>
           <View style={styles.amountInputContainer}>
-            <Text style={styles.currencyPrefix}>{currency.symbol}</Text>
+            <Text style={styles.currencyPrefix}>Rp</Text>
             <TextInput
               style={styles.amountInput}
               placeholder="0"
@@ -176,28 +129,10 @@ const AddTransactionScreen = ({ navigation }) => {
               placeholderTextColor={COLORS.textSecondary}
             />
           </View>
-
-          {/* Exchange Rate Input (if not IDR) */}
-          {currency.code !== 'IDR' && (
-            <View style={styles.exchangeRateContainer}>
-              <Text style={styles.exchangeRateLabel}>Kurs (ke IDR):</Text>
-              <TextInput
-                style={styles.exchangeRateInput}
-                value={exchangeRate}
-                onChangeText={setExchangeRate}
-                keyboardType="numeric"
-                placeholder="Rate"
-              />
-            </View>
-          )}
-
-          {/* Calculated IDR Preview */}
           {amount && parseFloat(amount) > 0 && (
-            <View style={styles.previewContainer}>
-              <Text style={styles.amountPreview}>
-                Total Estimasi: {formatCurrency(parseFloat(amount) * (parseFloat(exchangeRate) || 1), 'IDR')}
-              </Text>
-            </View>
+            <Text style={styles.amountPreview}>
+              {formatCurrency(parseFloat(amount))}
+            </Text>
           )}
         </View>
 
@@ -206,7 +141,7 @@ const AddTransactionScreen = ({ navigation }) => {
           <Text style={globalStyles.label}>Deskripsi</Text>
           <TextInput
             style={globalStyles.input}
-            placeholder="Contoh: Makan siang di restoran"
+            placeholder="Contoh: Gaji Bulanan, Tagihan Listrik"
             value={description}
             onChangeText={setDescription}
             placeholderTextColor={COLORS.textSecondary}
@@ -236,13 +171,44 @@ const AddTransactionScreen = ({ navigation }) => {
           </View>
         )}
 
-        {/* Date Input */}
+        {/* Frequency Selection */}
         <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Tanggal</Text>
+          <Text style={globalStyles.label}>Frekuensi</Text>
+          {frequencies.map(freq => (
+            <TouchableOpacity
+              key={freq.value}
+              style={[
+                styles.frequencyButton,
+                frequency === freq.value && styles.frequencyButtonActive
+              ]}
+              onPress={() => setFrequency(freq.value)}
+            >
+              <View style={styles.frequencyInfo}>
+                <Text style={[
+                  styles.frequencyLabel,
+                  frequency === freq.value && styles.frequencyLabelActive
+                ]}>
+                  {freq.label}
+                </Text>
+                <Text style={styles.frequencyDescription}>{freq.description}</Text>
+              </View>
+              <View style={[
+                styles.radio,
+                frequency === freq.value && styles.radioActive
+              ]}>
+                {frequency === freq.value && <View style={styles.radioDot} />}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Start Date */}
+        <View style={styles.inputGroup}>
+          <Text style={globalStyles.label}>Mulai Tanggal</Text>
           <TextInput
             style={globalStyles.input}
-            value={date}
-            onChangeText={setDate}
+            value={startDate}
+            onChangeText={setStartDate}
             placeholder="YYYY-MM-DD"
             placeholderTextColor={COLORS.textSecondary}
           />
@@ -263,19 +229,19 @@ const AddTransactionScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Photo Receipt */}
-        <ImagePickerComponent
-          imageUri={photoUri}
-          onImageSelected={setPhotoUri}
-          onImageRemoved={() => setPhotoUri(null)}
-        />
+        {/* Info Card */}
+        <View style={styles.infoCard}>
+          <Text style={styles.infoText}>
+            💡 Transaksi berulang akan otomatis dibuat sesuai frekuensi yang dipilih
+          </Text>
+        </View>
 
         {/* Save Button */}
         <TouchableOpacity
           style={[globalStyles.buttonPrimary, styles.saveButton]}
           onPress={handleSave}
         >
-          <Text style={globalStyles.buttonText}>💾 Simpan Transaksi</Text>
+          <Text style={globalStyles.buttonText}>💾 Simpan Transaksi Berulang</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -383,57 +349,72 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: COLORS.textSecondary,
   },
+  frequencyButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  frequencyButtonActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+  },
+  frequencyInfo: {
+    flex: 1,
+  },
+  frequencyLabel: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.text,
+    marginBottom: 2,
+  },
+  frequencyLabelActive: {
+    color: COLORS.primary,
+  },
+  frequencyDescription: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+  },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioActive: {
+    borderColor: COLORS.primary,
+  },
+  radioDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: COLORS.primary,
+  },
   notesInput: {
     minHeight: 80,
+  },
+  infoCard: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  infoText: {
+    fontSize: FONT_SIZES.sm,
+    color: '#1565C0',
   },
   saveButton: {
     marginTop: SPACING.md,
     marginBottom: SPACING.xl,
   },
-  currencySelector: {
-    marginBottom: SPACING.sm,
-  },
-  currencySelectorContent: {
-    paddingRight: SPACING.md,
-  },
-  currencyPill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: SPACING.sm,
-    backgroundColor: COLORS.surface,
-  },
-  currencyPillActive: {
-    backgroundColor: `${COLORS.primary}15`, // 10% opacity
-  },
-  currencyPillText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.text,
-  },
-  exchangeRateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: SPACING.sm,
-    backgroundColor: COLORS.background,
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-  },
-  exchangeRateLabel: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    marginRight: SPACING.sm,
-  },
-  exchangeRateInput: {
-    flex: 1,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.text,
-    fontWeight: 'bold',
-    padding: 0,
-  },
-  previewContainer: {
-    marginTop: SPACING.xs,
-  },
 });
 
-export default AddTransactionScreen;
+export default AddRecurringScreen;
