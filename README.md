@@ -1,103 +1,135 @@
-# Artha - Aplikasi Pencatat Keuangan Pribadi
+# Artha - Smart Financial Management 💰
 
-**Artha** (Sanskerta: *Kekayaan*) adalah aplikasi manajemen keuangan pribadi yang modern, aman, dan mudah digunakan. Didesain dengan antarmuka premium dan fitur lengkap untuk membantu pengguna mengelola pemasukan, pengeluaran, dan target finansial mereka secara bijak.
+[![Expo](https://img.shields.io/badge/EXPO-SDK_50+-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React_Native-0.73-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-Backend-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](./LICENSE)
+
+> **Artha** (Sanskerta: *Kekayaan*) adalah aplikasi manajemen keuangan pribadi yang modern, aman, dan intuitif. Dirancang untuk membantu Anda mencapai kebebasan finansial melalui pencatatan yang mudah dan analisis yang mendalam.
+
+---
+
+## 📱 Screenshots
+
+<p align="center">
+  <!-- Ganti link gambar di bawah ini dengan screenshot aplikasi Anda -->
+  <img src="https://via.placeholder.com/200x400?text=Home+Screen" alt="Home Screen" width="200" style="margin-right: 10px;" />
+  <img src="https://via.placeholder.com/200x400?text=Add+Transaction" alt="Add Transaction" width="200" style="margin-right: 10px;" />
+  <img src="https://via.placeholder.com/200x400?text=Statistics" alt="Statistics" width="200" style="margin-right: 10px;" />
+  <img src="https://via.placeholder.com/200x400?text=Profile" alt="Profile" width="200" />
+</p>
+
+---
 
 ## ✨ Fitur Utama
 
-### 1. 💰 Pencatatan & Manajemen
-*   **Transaksi Harian**: Catat pemasukan dan pengeluaran dengan cepat.
-*   **Kategori Kustom**: Buat dan kelola kategori sesuai kebutuhan (makan, transport, dll).
-*   **Budgeting**: Set batas anggaran bulanan per kategori dan dapatkan peringatan jika mendekati batas.
-*   **Recurring Transactions**: Otomatisasi pencatatan untuk tagihan rutin (listrik, kos, langganan).
-*   **Photo Receipts**: Simpan foto struk/bukti transaksi.
+### 1. 💰 Smart Tracking
+- **Pencatatan Cepat**: Input transaksi dalam hitungan detik.
+- **Kategori Fleksibel**: Kustomisasi kategori pemasukan dan pengeluaran.
+- **Photo Receipts**: Simpan bukti struk belanja langsung di aplikasi. (#ComingSoon)
 
-### 2. 📊 Analisis & Laporan
-*   **Laporan Interaktif**: Grafik tren pengeluaran (Line Chart) dan distribusi kategori (Pie Chart).
-*   **Financial Insights**: Halaman khusus yang memberikan highlight kondisi keuangan bulanan.
-*   **Multi-Currency**: Dukungan mata uang asing (USD, SGD, dll) dengan konversi otomatis ke IDR di laporan.
-*   **Export Data**: Unduh laporan dalam format **CSV** (Excel) atau **TXT**.
+### 2. 📊 Visual Analytics
+- **Grafik Interaktif**: Analisis tren pengeluaran dengan Line Chart dan Pie Chart yang responsif.
+- **Financial Insights**: Dapatkan ringkasan kondisi keuangan bulanan Anda secara otomatis.
+- **Export Data**: Unduh laporan keuangan dalam format `.CSV` atau `.TXT` untuk analisis lebih lanjut.
 
-### 3. 🎯 Target Keuangan (Goals)
-*   Buat tabungan impian (misal: "Beli Laptop", "Dana Darurat").
-*   Tentukan target dana dan deadline.
-*   Track progress secara visual.
+### 3. 🎯 Goal Setting
+- **Tabungan Impian**: Set target tabungan (misal: "Dana Liburan", "Beli Gadget").
+- **Asset Management**: Kelola data asset Anda secara terpusat.
 
-### 4. 🔒 Keamanan & Cloud
-*   **PIN Protection**: Kunci aplikasi dengan PIN 6-digit (SHA-256 Encrypted).
-*   **Cloud Backup & Sync**: Backup data aman ke Google Cloud (Firebase) dan restore saat ganti HP.
-*   **Offline-First**: Data tersimpan lokal di HP, bisa berjalan tanpa internet.
+### 4. 🔒 Enterprise-Grade Security
+- **PIN Protection**: Amankan data finansial dengan PIN 6-digit (SHA-256 Encrypted).
+- **Cloud Sync**: Sinkronisasi data real-time menggunakan Firebase Firestore.
+- **Offline First**: Tetap bisa mencatat transaksi tanpa koneksi internet.
+
+---
 
 ## 🛠 Teknologi
 
-Project ini dibangun menggunakan stack modern:
-*   **Framework**: [React Native](https://reactnative.dev/) dengan [Expo SDK 50+](https://expo.dev/).
-*   **Language**: JavaScript (React).
-*   **Local Storage**: Async Storage.
-*   **Cloud Backend**: Firebase (Auth & Firestore).
-*   **Charts**: React Native Chart Kit.
-*   **Icons**: Lucide Icons.
+Project ini dibangun dengan stack teknologi modern untuk memastikan performa yang cepat dan *scalable*.
 
-## 🚀 Cara Menjalankan Project
+| Kategori | Teknologi |
+|----------|-----------|
+| **Mobile Framework** | React Native (Expo SDK 50+) |
+| **Language** | TypeScript / JavaScript |
+| **Backend / DB** | Firebase Firestore & Auth |
+| **Local Storage** | Async Storage & SQLite |
+| **Charts** | React Native Chart Kit |
+| **Icons** | Lucide React Native |
+| **Navigation** | React Navigation 6 |
 
-### Prerequisites
-*   Node.js (LTS Version)
-*   Git
+---
+
+## 🚀 Memulai (Getting Started)
+
+Ikuti langkah-langkah berikut untuk menjalankan project ini di komputer lokal Anda.
+
+### Prerequisites (Prasyarat)
+Pastikan Anda sudah menginstall:
+- [Node.js](https://nodejs.org/) (LTS Version disarankan)
+- [Git](https://git-scm.com/)
+- [Expo Go](https://expo.dev/client) di HP Android/iOS Anda.
 
 ### Instalasi
-1.  **Clone Repository** (atau download folder project ini)
+
+1.  **Clone Repository**
     ```bash
-    git clone https://github.com/username/artha.git
+    git clone https://github.com/ArkanFzi/artha.git
     cd artha
     ```
 
 2.  **Install Dependencies**
     ```bash
     npm install
+    # atau
+    yarn install
     ```
 
-3.  **Jalankan Aplikasi (Development)**
+3.  **Konfigurasi Environment** (Opsional)
+    Buat file `.env` jika diperlukan untuk API Keys Firebase (lihat `.env.example`).
+
+4.  **Jalankan Aplikasi**
     ```bash
     npx expo start
     ```
-    *   Scan QR Code yang muncul dengan aplikasi **Expo Go** (Android/iOS).
+    Scan QR Code yang muncul di terminal menggunakan aplikasi **Expo Go**.
 
-## 📱 Cara Membuat APK (Android)
+---
 
-Untuk membuat file APK yang bisa diinstall di HP tanpa laptop:
-
-1.  **Install EAS CLI**
-    ```bash
-    npm install -g eas-cli
-    ```
-
-2.  **Login ke Expo**
-    ```bash
-    eas login
-    ```
-
-3.  **Build APK**
-    ```bash
-    eas build --platform android --profile preview
-    ```
-    *   Tunggu proses build (10-20 menit).
-    *   Download link yang muncul di terminal.
-
-## 📝 Struktur Folder
+## 📂 Struktur Folder
 
 ```
 src/
-├── components/   # Komponen UI reusable (Button, Card, Chart)
-├── screens/      # Halaman aplikasi (Home, Report, Settings)
-├── navigation/   # Konfigurasi routing/navigasi
-├── utils/        # Logic, helpers, dan storage service
-├── styles/       # Tema warna dan dlobal styles
-├── config/       # Konfigurasi Firebase dll
-└── contexts/     # State management (Theme, PIN)
+├── 📂 components/   # Komponen UI reusable (Button, Card, Input)
+├── 📂 screens/      # Halaman utama aplikasi (Home, Report, Profile)
+├── 📂 navigation/   # Konfigurasi routing (Stack & Tab Navigator)
+├── 📂 utils/        # Fungsi helper, konstanta, dan logic bisnis
+├── 📂 styles/       # Global styles dan tema warna
+├── 📂 config/       # Konfigurasi Firebase dan layanan pihak ketiga
+└── 📂 contexts/     # Global state management (Auth, Theme)
 ```
+
+---
+
+## 🤝 Kontribusi
+
+Kontribusi selalu diterima! Caranya:
+
+1.  Fork repository ini.
+2.  Buat branch fitur baru (`git checkout -b fitur-keren`).
+3.  Commit perubahan Anda (`git commit -m 'Menambahkan fitur keren'`).
+4.  Push ke branch (`git push origin fitur-keren`).
+5.  Buat Pull Request.
+
+---
 
 ## 📄 Lisensi
 
-Project ini dibuat untuk tujuan pembelajaran dan portfolio pribadi.
+Copyright © 2024 Arkan.
+Dibuat dengan ❤️ untuk manajemen keuangan yang lebih baik.
 
 ---
-*Dibuat kopi oleh Arkan*
+<div align="center">
+  <sub>Developed by Arkan</sub>
+</div>
