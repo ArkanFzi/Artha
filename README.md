@@ -126,8 +126,8 @@ Kontribusi selalu diterima! Caranya:
 
 ## 📄 Lisensi
 
-Copyright © 2024 Arkan.
-Dibuat dengan ❤️ untuk manajemen keuangan yang lebih baik.
+Copyright © 2026 Arkan.
+Dibuat untuk manajemen keuangan yang lebih baik.
 
 ---
 <div align="center">
