@@ -163,8 +163,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.headerBackground} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar 
+        barStyle="light-content" 
+        backgroundColor={COLORS.headerBackground} 
+      />
       
       {/* Fixed Header with Gradient */}
       <LinearGradient
@@ -206,23 +209,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
+        <View style={[styles.searchContainer, { backgroundColor: isDark ? theme.surface : '#FFF' }]}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.text }]}
             placeholder="Cari transaksi..."
-            placeholderTextColor="#999"
+            placeholderTextColor={theme.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
         {/* Balance Card */}
-        <View style={styles.balanceCard}>
+        <View style={[styles.balanceCard, { backgroundColor: isDark ? theme.surface : '#FFF' }]}>
           <View style={styles.balanceContent}>
             <View style={styles.balanceLeft}>
-              <Text style={styles.balanceTitle}>SOLUSI FINANSIAL,{'\n'}DALAM GENGGAMAN!</Text>
-              <Text style={styles.balanceSubtitle}>Kelola uangmu dengan cerdas{'\n'}dan efisien setiap hari.</Text>
+              <Text style={[styles.balanceTitle, { color: theme.text }]}>SOLUSI FINANSIAL,{'\n'}DALAM GENGGAMAN!</Text>
+              <Text style={[styles.balanceSubtitle, { color: theme.textSecondary }]}>Kelola uangmu dengan cerdas{'\n'}dan efisien setiap hari.</Text>
               <TouchableOpacity 
                 style={styles.reportBtn}
                 onPress={() => navigation.navigate('Report')}
@@ -259,7 +262,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         {/* Service Categories */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Kategori Layanan</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Kategori Layanan</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Category')}>
               <Text style={styles.seeAllText}>Lihat semua ›</Text>
             </TouchableOpacity>
@@ -274,12 +277,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             ].map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.serviceCard}
+                style={[styles.serviceCard, { backgroundColor: isDark ? theme.surface : '#FFF' }]}
                 onPress={() => (navigation.navigate as any)(item.screen)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.serviceIcon}>{item.icon}</Text>
-                <Text style={styles.serviceLabel}>{item.label}</Text>
+                <Text style={[styles.serviceLabel, { color: theme.text }]}>{item.label}</Text>
                 <Text style={styles.serviceChevron}>›</Text>
               </TouchableOpacity>
             ))}
@@ -289,13 +292,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         {/* Recent Transactions */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Transaksi Terpopuler</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Transaksi Terpopuler</Text>
             <TouchableOpacity onPress={() => (navigation.navigate as any)('Transactions')}>
               <Text style={styles.seeAllText}>Lihat semua ›</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.transactionList}>
+          <View style={[styles.transactionList, { backgroundColor: isDark ? theme.surface : '#FFF' }]}>
             {filteredTransactions.length > 0 ? (
               filteredTransactions.map((transaction) => (
                 <TransactionCard
@@ -308,7 +311,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             ) : (
               <View style={styles.emptyState}>
                 <Text style={{ fontSize: 48, marginBottom: 12 }}>🍃</Text>
-                <Text style={styles.emptyText}>Belum ada transaksi ditemukan.</Text>
+                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Belum ada transaksi ditemukan.</Text>
               </View>
             )}
           </View>
@@ -325,6 +328,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       >
         <Text style={{ fontSize: 36, color: '#FFF', fontWeight: '300' }}>+</Text>
       </TouchableOpacity>
+
 
       {/* Location Selector Modal */}
       <Modal
