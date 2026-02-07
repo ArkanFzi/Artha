@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { PieChart, BarChart } from 'react-native-chart-kit';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
-import { globalStyles } from '../styles/globalStyles';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import TransactionCard from '../components/TransactionCard';
+import StatCard from '../components/StatCard';
 import { getTransactions, getCategories } from '../utils/storage';
 import { exportToCSV, exportToTextReport, exportSummaryReport } from '../utils/exportService';
 import { 
@@ -34,6 +34,7 @@ import CategoryPieChart from '../components/CategoryPieChart';
 import { NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { Transaction, Category } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -42,6 +43,7 @@ interface ReportScreenProps {
 }
 
 const ReportScreen: React.FC<ReportScreenProps> = ({ navigation }) => {
+  const { theme, isDark } = useTheme();
   const [viewMode, setViewMode] = useState<'summary' | 'analytics'>('summary');
   const [activeTab, setActiveTab] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -73,23 +75,7 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ navigation }) => {
     setRefreshing(false);
   };
 
-  const handleExportCSV = async () => {
-    await exportToCSV(transactions, categories);
-  };
-
-  const handleExportReport = async () => {
-    await exportToTextReport(transactions, categories);
-  };
-
-  const handleExportSummary = async () => {
-    await exportSummaryReport(transactions, categories);
-  };
-
   const getCategoryById = (id: string) => categories.find(c => c.id === id);
-
-  const todayTransactions = filterTransactionsByToday(transactions);
-  const todayIncome = calculateTotalIncome(todayTransactions);
-  const todayExpense = calculateTotalExpense(todayTransactions);
 
   const currentMonth = getCurrentMonth();
   const monthlyTransactions = filterTransactionsByMonth(transactions, currentMonth);
@@ -98,74 +84,63 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ navigation }) => {
   const categorySpending = groupExpensesByCategory(monthlyTransactions, categories);
 
   const currentYear = getCurrentYear();
-  const yearlyTransactions = filterTransactionsByYear(transactions, currentYear);
-  const yearlyIncome = calculateTotalIncome(yearlyTransactions);
-  const yearlyExpense = calculateTotalExpense(yearlyTransactions);
-  const monthlyTrend = getMonthlySpendingTrend(transactions, currentYear);
+  const yearlyIncome = calculateTotalIncome(filterTransactionsByYear(transactions, currentYear));
+  const yearlyExpense = calculateTotalExpense(filterTransactionsByYear(transactions, currentYear));
+  
+  const todayTransactions = filterTransactionsByToday(transactions);
+  const todayIncome = calculateTotalIncome(todayTransactions);
+  const todayExpense = calculateTotalExpense(todayTransactions);
 
   const chartConfig = {
-    backgroundColor: COLORS.surface as string,
-    backgroundGradientFrom: COLORS.surface as string,
-    backgroundGradientTo: COLORS.surface as string,
+    backgroundColor: theme.surface,
+    backgroundGradientFrom: theme.surface,
+    backgroundGradientTo: theme.surface,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(0, 191, 166, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(33, 33, 33, ${opacity})`,
+    color: (opacity = 1) => `rgba(0, 217, 166, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`,
     style: {
-      borderRadius: BORDER_RADIUS.md,
+      borderRadius: BORDER_RADIUS.lg,
     },
     propsForDots: {
       r: '6',
       strokeWidth: '2',
-      stroke: COLORS.primary as string,
+      stroke: theme.primary,
     },
   };
 
   const renderDailyReport = () => (
     <View>
-      <View style={styles.statsCard}>
-        <View style={styles.statRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>💰 Pemasukan</Text>
-            <Text style={[styles.statValue, { color: COLORS.success as string }]}>
-              {formatCurrency(todayIncome)}
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>💸 Pengeluaran</Text>
-            <Text style={[styles.statValue, { color: COLORS.danger as string }]}>
-              {formatCurrency(todayExpense)}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.statRow}>
-          <Text style={styles.balanceLabel}>Saldo Hari Ini:</Text>
-          <Text style={[
-            styles.balanceValue,
-            { color: (todayIncome - todayExpense) >= 0 ? COLORS.success as string : COLORS.danger as string }
-          ]}>
-            {formatCurrency(todayIncome - todayExpense)}
-          </Text>
-        </View>
+      <View style={styles.statsGrid}>
+        <StatCard title="Pemasukan" value={formatCurrency(todayIncome)} icon="💰" size="medium" />
+        <StatCard title="Pengeluaran" value={formatCurrency(todayExpense)} icon="💸" size="medium" />
+      </View>
+      
+      <View style={[styles.balanceBar, { backgroundColor: theme.surface }]}>
+        <Text style={[styles.balanceLabel, { color: theme.textSecondary }]}>Saldo Hari Ini</Text>
+        <Text style={[styles.balanceValue, { color: theme.primary }]}>
+          {formatCurrency(todayIncome - todayExpense)}
+        </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Transaksi Hari Ini</Text>
-      {todayTransactions.length > 0 ? (
-        todayTransactions
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .map((transaction) => (
-            <TransactionCard
-              key={transaction.id}
-              transaction={transaction}
-              category={getCategoryById(transaction.categoryId)}
-            />
-          ))
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>📝</Text>
-          <Text style={styles.emptyText}>Belum ada transaksi hari ini</Text>
-        </View>
-      )}
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Transaksi Hari Ini</Text>
+      <View style={[styles.transactionBox, { backgroundColor: theme.surface }]}>
+        {todayTransactions.length > 0 ? (
+          todayTransactions
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .map((transaction) => (
+              <TransactionCard
+                key={transaction.id}
+                transaction={transaction}
+                category={getCategoryById(transaction.categoryId)}
+              />
+            ))
+        ) : (
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyIcon}>📝</Text>
+            <Text style={{ color: theme.textSecondary }}>Belum ada transaksi hari ini</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 
@@ -174,45 +149,23 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ navigation }) => {
       name: cat.categoryName,
       population: cat.total,
       color: cat.categoryColor,
-      legendFontColor: COLORS.text as string,
+      legendFontColor: theme.textSecondary,
       legendFontSize: 12,
     }));
 
     return (
       <View>
-        <View style={styles.statsCard}>
-          <View style={styles.statRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>💰 Pemasukan</Text>
-              <Text style={[styles.statValue, { color: COLORS.success as string }]}>
-                {formatCurrency(monthlyIncome)}
-              </Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>💸 Pengeluaran</Text>
-              <Text style={[styles.statValue, { color: COLORS.danger as string }]}>
-                {formatCurrency(monthlyExpense)}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.statRow}>
-            <Text style={styles.balanceLabel}>Saldo Bulan Ini:</Text>
-            <Text style={[
-              styles.balanceValue,
-              { color: (monthlyIncome - monthlyExpense) >= 0 ? COLORS.success as string : COLORS.danger as string }
-            ]}>
-              {formatCurrency(monthlyIncome - monthlyExpense)}
-            </Text>
-          </View>
+        <View style={styles.statsGrid}>
+          <StatCard title="Pemasukan" value={formatCurrency(monthlyIncome)} icon="💰" size="medium" />
+          <StatCard title="Pengeluaran" value={formatCurrency(monthlyExpense)} icon="💸" size="medium" />
         </View>
 
         {pieChartData.length > 0 && (
-          <View style={styles.chartCard}>
-            <Text style={styles.chartTitle}>Pengeluaran Per Kategori</Text>
+          <View style={[styles.chartCard, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.chartTitle, { color: theme.text }]}>Distribusi Pengeluaran</Text>
             <PieChart
               data={pieChartData}
-              width={screenWidth - SPACING.md * 4}
+              width={screenWidth - 64}
               height={220}
               chartConfig={chartConfig}
               accessor="population"
@@ -223,210 +176,154 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ navigation }) => {
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Detail Kategori</Text>
-        {categorySpending.map((cat) => (
-          <View key={cat.categoryId} style={styles.categoryCard}>
-            <View style={styles.categoryHeader}>
-              <View style={styles.categoryInfo}>
-                <Text style={styles.categoryIcon}>{cat.categoryIcon}</Text>
-                <View>
-                  <Text style={styles.categoryName}>{cat.categoryName}</Text>
-                  <Text style={styles.categoryCount}>{cat.count} transaksi</Text>
-                </View>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Detail Kategori</Text>
+        <View style={[styles.transactionBox, { backgroundColor: theme.surface }]}>
+          {categorySpending.map((cat) => (
+            <View key={cat.categoryId} style={styles.categoryItem}>
+              <View style={[styles.categoryIconWrap, { backgroundColor: `${cat.categoryColor}15` }]}>
+                <Text style={{ fontSize: 24 }}>{cat.categoryIcon}</Text>
               </View>
-              <Text style={styles.categoryAmount}>{formatCurrency(cat.total)}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.categoryName, { color: theme.text }]}>{cat.categoryName}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{cat.count} transaksi</Text>
+              </View>
+              <Text style={[styles.categoryValue, { color: theme.text }]}>{formatCurrency(cat.total)}</Text>
             </View>
-          </View>
-        ))}
+          ))}
+        </View>
       </View>
     );
   };
 
   const renderYearlyReport = () => {
+    const monthlyTrend = getMonthlySpendingTrend(transactions, currentYear);
     const barChartData = {
       labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
-      datasets: [{
-        data: monthlyTrend.length > 0 ? monthlyTrend : [0],
-      }],
+      datasets: [{ data: monthlyTrend }],
     };
 
     return (
       <View>
-        <View style={styles.statsCard}>
-          <View style={styles.statRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>💰 Pemasukan {currentYear}</Text>
-              <Text style={[styles.statValue, { color: COLORS.success as string }]}>
-                {formatCurrency(yearlyIncome)}
-              </Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>💸 Pengeluaran {currentYear}</Text>
-              <Text style={[styles.statValue, { color: COLORS.danger as string }]}>
-                {formatCurrency(yearlyExpense)}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.statRow}>
-            <Text style={styles.balanceLabel}>Saldo Tahun Ini:</Text>
-            <Text style={[
-              styles.balanceValue,
-              { color: (yearlyIncome - yearlyExpense) >= 0 ? COLORS.success as string : COLORS.danger as string }
-            ]}>
-              {formatCurrency(yearlyIncome - yearlyExpense)}
-            </Text>
-          </View>
+        <View style={styles.statsGrid}>
+          <StatCard title="Income" value={formatCurrency(yearlyIncome)} icon="💰" size="medium" />
+          <StatCard title="Expense" value={formatCurrency(yearlyExpense)} icon="💸" size="medium" />
         </View>
 
-        {monthlyTrend.some(val => val > 0) && (
-          <View style={styles.chartCard}>
-            <Text style={styles.chartTitle}>Trend Pengeluaran {currentYear}</Text>
+        {monthlyTrend.some(v => v > 0) && (
+          <View style={[styles.chartCard, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.chartTitle, { color: theme.text }]}>Trend Pengeluaran {currentYear}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <BarChart
                 data={barChartData}
-                width={Math.max(screenWidth - SPACING.md * 4, 600)}
+                width={Math.max(screenWidth - 64, 800)}
                 height={220}
                 chartConfig={chartConfig}
                 verticalLabelRotation={0}
                 fromZero
-                showValuesOnTopOfBars
-                yAxisSuffix=""
-                style={styles.chart}
+                style={{ borderRadius: 16 }}
               />
             </ScrollView>
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Ringkasan Bulanan</Text>
-        {monthlyTrend.map((amount, index) => {
-          if (amount === 0) return null;
-          return (
-            <View key={index} style={styles.monthCard}>
-              <Text style={styles.monthName}>{getMonthName(index)} {currentYear}</Text>
-              <Text style={styles.monthAmount}>{formatCurrency(amount)}</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Ringkasan Bulanan</Text>
+        <View style={[styles.transactionBox, { backgroundColor: theme.surface }]}>
+          {monthlyTrend.map((amount, index) => amount > 0 && (
+            <View key={index} style={styles.monthRow}>
+              <Text style={[styles.monthName, { color: theme.text }]}>{getMonthName(index)}</Text>
+              <Text style={[styles.monthValue, { color: theme.text }]}>{formatCurrency(amount)}</Text>
             </View>
-          );
-        })}
-      </View>
-    );
-  };
-
-  const renderAnalytics = () => {
-    const trendData = getLast6MonthsTrend(transactions);
-    const categoryDistMonth = getCategoryDistribution(transactions, categories, getCurrentMonth());
-
-    return (
-      <View>
-        <Text style={styles.sectionTitle}>Analisis Pengeluaran</Text>
-        
-        <TrendChart data={trendData.data} labels={trendData.labels} />
-
-        <CategoryPieChart data={categoryDistMonth.data} />
-
-        <View style={styles.insightCard}>
-          <Text style={styles.insightTitle}>💡 Insight Keuangan</Text>
-          <Text style={styles.insightText}>
-            • Pengeluaran rata-rata 3 bulan terakhir: {formatCurrency(
-                (trendData.data.slice(3).reduce((a, b) => a + b, 0) / 3) || 0
-              )}
-          </Text>
-          {categoryDistMonth.data.length > 0 && (
-            <Text style={styles.insightText}>
-              • Kategori terboros bulan ini: <Text style={{fontWeight: 'bold'}}>{categoryDistMonth.data[0].name}</Text>
-            </Text>
-          )}
+          ))}
         </View>
       </View>
     );
   };
 
   return (
-    <View style={globalStyles.container}>
-      <View style={styles.viewModeContainer}>
-        <TouchableOpacity
-          style={[styles.modeButton, viewMode === 'summary' && styles.modeButtonActive]}
-          onPress={() => setViewMode('summary')}
-        >
-          <Text style={[styles.modeText, viewMode === 'summary' && styles.modeTextActive]}>Ringkasan</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.modeButton, viewMode === 'analytics' && styles.modeButtonActive]}
-          onPress={() => setViewMode('analytics')}
-        >
-          <Text style={[styles.modeText, viewMode === 'analytics' && styles.modeTextActive]}>Analisis</Text>
-        </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* View Mode Header */}
+      <View style={[styles.modeHeader, { backgroundColor: theme.surface }]}>
+        <View style={[styles.modePill, { backgroundColor: theme.surfaceLight }]}>
+          <TouchableOpacity 
+            style={[styles.modeTab, viewMode === 'summary' && { backgroundColor: theme.primary }]}
+            onPress={() => setViewMode('summary')}
+          >
+            <Text style={[styles.modeTabText, { color: viewMode === 'summary' ? COLORS.navy : theme.textSecondary }]}>Ringkasan</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.modeTab, viewMode === 'analytics' && { backgroundColor: theme.primary }]}
+            onPress={() => setViewMode('analytics')}
+          >
+            <Text style={[styles.modeTabText, { color: viewMode === 'analytics' ? COLORS.navy : theme.textSecondary }]}>Analisis</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {viewMode === 'summary' && (
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'daily' && styles.tabActive]}
-            onPress={() => setActiveTab('daily')}
-          >
-            <Text style={[styles.tabText, activeTab === 'daily' && styles.tabTextActive]}>
-              Harian
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'monthly' && styles.tabActive]}
-            onPress={() => setActiveTab('monthly')}
-          >
-            <Text style={[styles.tabText, activeTab === 'monthly' && styles.tabTextActive]}>
-              Bulanan
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'yearly' && styles.tabActive]}
-            onPress={() => setActiveTab('yearly')}
-          >
-            <Text style={[styles.tabText, activeTab === 'yearly' && styles.tabTextActive]}>
-              Tahunan
-            </Text>
-          </TouchableOpacity>
+        <View style={[styles.activeTabContainer, { backgroundColor: theme.surface }]}>
+          {['daily', 'monthly', 'yearly'].map((tab) => (
+            <TouchableOpacity 
+              key={tab}
+              style={[styles.tabItem, activeTab === tab && { borderBottomColor: theme.primary }]}
+              onPress={() => setActiveTab(tab as any)}
+            >
+              <Text style={[styles.tabItemText, { color: activeTab === tab ? theme.primary : theme.textSecondary }]}>
+                {tab === 'daily' ? 'Harian' : tab === 'monthly' ? 'Bulanan' : 'Tahunan'}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
-      {viewMode === 'summary' && (
-        <View style={styles.exportContainer}>
-          <Text style={styles.exportTitle}>📤 Export Data</Text>
-          <View style={styles.exportButtons}>
-            <TouchableOpacity
-              style={[styles.exportButton, { backgroundColor: '#4CAF50' }]}
-              onPress={handleExportCSV}
-            >
-              <Text style={styles.exportButtonText}>📊 CSV</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.exportButton, { backgroundColor: '#2196F3' }]}
-              onPress={handleExportReport}
-            >
-              <Text style={styles.exportButtonText}>📄 Laporan</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.exportButton, { backgroundColor: '#FF9800' }]}
-              onPress={handleExportSummary}
-            >
-              <Text style={styles.exportButtonText}>📈 Ringkasan</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      <ScrollView
+      <ScrollView 
+        style={styles.content}
         contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
       >
         {viewMode === 'summary' ? (
           <>
+            <View style={styles.exportSection}>
+              <Text style={[styles.exportTitle, { color: theme.textMuted }]}>EXPORT LAPORAN</Text>
+              <View style={styles.exportGrid}>
+                 {[
+                   { label: 'CSV', icon: '📊', color: '#10B981', action: () => exportToCSV(transactions, categories) },
+                   { label: 'PDF', icon: '📄', color: '#6366F1', action: () => exportToTextReport(transactions, categories) },
+                   { label: 'SMRY', icon: '📈', color: '#F59E0B', action: () => exportSummaryReport(transactions, categories) },
+                 ].map((btn, i) => (
+                   <TouchableOpacity 
+                    key={i} 
+                    style={[styles.exportBtn, { backgroundColor: theme.surfaceLight }]}
+                    onPress={btn.action}
+                   >
+                     <Text style={{ fontSize: 18, marginBottom: 4 }}>{btn.icon}</Text>
+                     <Text style={[styles.exportBtnText, { color: theme.text }]}>{btn.label}</Text>
+                   </TouchableOpacity>
+                 ))}
+              </View>
+            </View>
+
             {activeTab === 'daily' && renderDailyReport()}
             {activeTab === 'monthly' && renderMonthlyReport()}
             {activeTab === 'yearly' && renderYearlyReport()}
           </>
         ) : (
-          renderAnalytics()
+          <View>
+             {/* Analytics implementation using TrendChart and CategoryPieChart */}
+             <TrendChart data={getLast6MonthsTrend(transactions).data} labels={getLast6MonthsTrend(transactions).labels} />
+             <View style={{ height: 20 }} />
+             <CategoryPieChart data={getCategoryDistribution(transactions, categories, getCurrentMonth()).data} />
+             
+             <View style={[styles.insightCard, { backgroundColor: theme.surfaceLight }]}>
+               <Text style={[styles.insightTitle, { color: theme.primary }]}>💡 Insight Hari Ini</Text>
+               <Text style={[styles.insightText, { color: theme.textSecondary }]}>
+                 • Pengeluaran terbesar Anda bulan ini ada di kategori <Text style={{ fontWeight: '800', color: theme.text }}>{categorySpending[0]?.categoryName || 'N/A'}</Text>.
+               </Text>
+               <Text style={[styles.insightText, { color: theme.textSecondary, marginTop: 8 }]}>
+                 • Rata-rata harian bulan ini: <Text style={{ fontWeight: '800', color: theme.text }}>{formatCurrency(monthlyExpense / 30)}</Text>.
+               </Text>
+             </View>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -434,224 +331,180 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface as string,
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.sm,
-  },
-  tab: {
+  container: {
     flex: 1,
-    paddingVertical: SPACING.md,
+  },
+  modeHeader: {
+    paddingTop: 60,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
+  modePill: {
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: 100,
+  },
+  modeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 100,
+    alignItems: 'center',
+  },
+  modeTabText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  activeTabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 14,
     alignItems: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabActive: {
-    borderBottomColor: COLORS.primary as string,
+  tabItemText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
-  tabText: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: FONT_WEIGHTS.medium as any,
-    color: COLORS.textSecondary as string,
-  },
-  tabTextActive: {
-    color: COLORS.primary as string,
-    fontWeight: FONT_WEIGHTS.bold as any,
+  content: {
+    flex: 1,
   },
   scrollContent: {
-    padding: SPACING.md,
+    padding: 24,
+    paddingBottom: 100,
   },
-  statsCard: {
-    backgroundColor: COLORS.surface as string,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
+  statsGrid: {
+    flexDirection: 'row',
+    marginHorizontal: -6,
+    marginBottom: 20,
   },
-  statRow: {
+  balanceBar: {
+    padding: 20,
+    borderRadius: 24,
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  statItem: {
-    flex: 1,
-  },
-  statLabel: {
-    fontSize: FONT_SIZES.sm as any,
-    color: COLORS.textSecondary as string,
-    marginBottom: SPACING.xs,
-  },
-  statValue: {
-    fontSize: FONT_SIZES.lg as any,
-    fontWeight: FONT_WEIGHTS.bold as any,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border as string,
-    marginVertical: SPACING.md,
+    alignItems: 'center',
+    marginBottom: 32,
+    ...SHADOWS.small,
   },
   balanceLabel: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.text as string,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   balanceValue: {
-    fontSize: FONT_SIZES.xl as any,
-    fontWeight: FONT_WEIGHTS.bold as any,
-  },
-  chartCard: {
-    backgroundColor: COLORS.surface as string,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  chartTitle: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text as string,
-    marginBottom: SPACING.md,
-  },
-  chart: {
-    borderRadius: BORDER_RADIUS.md,
+    fontSize: 20,
+    fontWeight: '800',
   },
   sectionTitle: {
-    fontSize: FONT_SIZES.lg as any,
-    fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text as string,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.md,
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 16,
+    letterSpacing: -0.5,
   },
-  categoryCard: {
-    backgroundColor: COLORS.surface as string,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
+  transactionBox: {
+    borderRadius: 24,
+    padding: 16,
+    ...SHADOWS.small,
   },
-  categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  emptyWrap: {
+    padding: 40,
     alignItems: 'center',
-  },
-  categoryInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  categoryIcon: {
-    fontSize: 28,
-    marginRight: SPACING.md,
-  },
-  categoryName: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.text as string,
-  },
-  categoryCount: {
-    fontSize: FONT_SIZES.xs as any,
-    color: COLORS.textSecondary as string,
-    marginTop: 2,
-  },
-  categoryAmount: {
-    fontSize: FONT_SIZES.lg as any,
-    fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.danger as string,
-  },
-  monthCard: {
-    backgroundColor: COLORS.surface as string,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  monthName: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.text as string,
-  },
-  monthAmount: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.danger as string,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xxl,
   },
   emptyIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
+    fontSize: 48,
+    marginBottom: 12,
   },
-  emptyText: {
-    fontSize: FONT_SIZES.md as any,
-    color: COLORS.textSecondary as string,
+  chartCard: {
+    padding: 16,
+    borderRadius: 24,
+    marginBottom: 32,
+    ...SHADOWS.small,
   },
-  exportContainer: {
-    backgroundColor: COLORS.surface as string,
-    padding: SPACING.md,
+  chartTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 16,
   },
-  exportTitle: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.text as string,
-    marginBottom: SPACING.sm,
-  },
-  exportButtons: {
+  categoryItem: {
     flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  exportButton: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
     alignItems: 'center',
+    paddingVertical: 12,
   },
-  exportButtonText: {
-    color: COLORS.textLight as string,
-    fontSize: FONT_SIZES.sm as any,
-    fontWeight: FONT_WEIGHTS.semibold as any,
+  categoryIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
-  viewModeContainer: {
+  categoryName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  categoryValue: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  monthRow: {
     flexDirection: 'row',
-    padding: SPACING.md,
-    backgroundColor: COLORS.surface as string,
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
-  modeButton: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    alignItems: 'center',
-    borderRadius: BORDER_RADIUS.pill,
-    backgroundColor: COLORS.background as string,
-    marginHorizontal: 4,
-  },
-  modeButtonActive: {
-    backgroundColor: COLORS.primary as string,
-  },
-  modeText: {
-    fontSize: FONT_SIZES.md as any,
-    color: COLORS.textSecondary as string,
+  monthName: {
+    fontSize: 15,
     fontWeight: '600',
   },
-  modeTextActive: {
-    color: COLORS.textLight as string,
+  monthValue: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  exportSection: {
+    marginBottom: 32,
+  },
+  exportTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 12,
+  },
+  exportGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  exportBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 20,
+    alignItems: 'center',
+    ...SHADOWS.small,
+  },
+  exportBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   insightCard: {
-    backgroundColor: '#E3F2FD',
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.lg,
+    marginTop: 24,
+    padding: 20,
+    borderRadius: 24,
   },
   insightTitle: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: 'bold',
-    color: '#1565C0',
-    marginBottom: SPACING.sm,
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 12,
   },
   insightText: {
-    fontSize: FONT_SIZES.sm as any,
-    color: '#0D47A1',
+    fontSize: 13,
     lineHeight: 20,
-    marginBottom: 4,
   },
 });
 

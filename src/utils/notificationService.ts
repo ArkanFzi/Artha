@@ -252,3 +252,162 @@ export const initializeNotifications = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// ============================================
+// IN-APP NOTIFICATION HELPERS
+// ============================================
+
+import { createNotification } from './storage';
+import { Notification as InAppNotification, NotificationType, NotificationPriority } from '../types';
+
+/**
+ * Helper function to create an in-app notification with default values
+ */
+const makeInAppNotification = (
+  type: NotificationType,
+  title: string,
+  message: string,
+  icon: string,
+  priority: NotificationPriority = 'medium',
+  relatedId?: string
+): Omit<InAppNotification, 'id'> => ({
+  type,
+  title,
+  message,
+  icon,
+  priority,
+  isRead: false,
+  createdAt: new Date().toISOString(),
+  relatedId,
+});
+
+/**
+ * Create an in-app budget warning notification
+ */
+export const notifyBudgetWarning = async (
+  categoryName: string,
+  percentage: number,
+  budgetId?: string
+) => {
+  const isOverBudget = percentage >= 100;
+  const priority: NotificationPriority = isOverBudget ? 'high' : percentage >= 80 ? 'medium' : 'low';
+  
+  const title = isOverBudget 
+    ? '⚠️ Budget Terlampaui!' 
+    : '⚡ Peringatan Budget';
+  
+  const message = isOverBudget
+    ? `Budget ${categoryName} sudah melampaui ${percentage.toFixed(0)}%!`
+    : `Budget ${categoryName} sudah mencapai ${percentage.toFixed(0)}%`;
+
+  const notification = makeInAppNotification(
+    'budget_warning',
+    title,
+    message,
+    '💰',
+    priority,
+    budgetId
+  );
+
+  try {
+    await createNotification(notification);
+  } catch (error) {
+    console.error('Failed to create in-app budget warning notification:', error);
+  }
+};
+
+/**
+ * Create an in-app goal achievement notification
+ */
+export const notifyGoalAchieved = async (
+  goalName: string,
+  amount: number,
+  goalId?: string
+) => {
+  const notification = makeInAppNotification(
+    'goal_achieved',
+    '🎉 Target Tercapai!',
+    `Selamat! Target "${goalName}" berhasil dicapai dengan total Rp ${amount.toLocaleString('id-ID')}`,
+    '🎯',
+    'high',
+    goalId
+  );
+
+  try {
+    await createNotification(notification);
+  } catch (error) {
+    console.error('Failed to create in-app goal achievement notification:', error);
+  }
+};
+
+/**
+ * Create an in-app bill reminder notification
+ */
+export const notifyBillReminder = async (
+  description: string,
+  amount: number,
+  dueDate: string,
+  transactionId?: string
+) => {
+  const notification = makeInAppNotification(
+    'bill_reminder',
+    '🔔 Pengingat Tagihan',
+    `Jangan lupa bayar "${description}" sebesar Rp ${amount.toLocaleString('id-ID')} pada ${dueDate}`,
+    '💳',
+    'medium',
+    transactionId
+  );
+
+  try {
+    await createNotification(notification);
+  } catch (error) {
+    console.error('Failed to create in-app bill reminder notification:', error);
+  }
+};
+
+/**
+ * Create an in-app recurring transaction notification
+ */
+export const notifyRecurringTransaction = async (
+  description: string,
+  amount: number,
+  type: 'income' | 'expense',
+  recurringId?: string
+) => {
+  const icon = type === 'income' ? '💵' : '💸';
+  const typeText = type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+  
+  const notification = makeInAppNotification(
+    'recurring_transaction',
+    `🔁 ${typeText} Berulang`,
+    `${typeText} berulang "${description}" sebesar Rp ${amount.toLocaleString('id-ID')} telah ditambahkan`,
+    icon,
+    'low',
+    recurringId
+  );
+
+  try {
+    await createNotification(notification);
+  } catch (error) {
+    console.error('Failed to create in-app recurring transaction notification:', error);
+  }
+};
+
+/**
+ * Create a welcome notification (for first-time users)
+ */
+export const createWelcomeNotification = async () => {
+  const notification = makeInAppNotification(
+    'general',
+    '👋 Selamat Datang!',
+    'Terima kasih telah menggunakan Artha. Kelola keuangan Anda dengan bijak!',
+    '🎉',
+    'low'
+  );
+
+  try {
+    await createNotification(notification);
+  } catch (error) {
+    console.error('Failed to create welcome notification:', error);
+  }
+};

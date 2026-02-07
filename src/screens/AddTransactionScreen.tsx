@@ -7,11 +7,9 @@ import {
   TextInput, 
   TouchableOpacity,
   Alert,
-  ViewStyle,
-  TextStyle
+  Dimensions
 } from 'react-native';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
-import { globalStyles } from '../styles/globalStyles';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import CategoryPicker from '../components/CategoryPicker';
 import ImagePickerComponent from '../components/ImagePickerComponent';
 import { saveTransaction, getCategories } from '../utils/storage';
@@ -19,6 +17,9 @@ import { CURRENCIES, formatCurrency, Currency } from '../utils/currency';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { Category, TransactionType } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
+
+const { width } = Dimensions.get('window');
 
 interface AddTransactionScreenProps {
   navigation: NavigationProp<RootStackParamList, 'AddTransaction'>;
@@ -26,6 +27,7 @@ interface AddTransactionScreenProps {
 }
 
 const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation, route }) => {
+  const { theme, isDark } = useTheme();
   const editTransaction = route.params?.transaction;
 
   const [type, setType] = useState<TransactionType>(editTransaction?.type || 'expense');
@@ -111,186 +113,176 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation,
   };
 
   return (
-    <View style={globalStyles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Type Toggle */}
-        <View style={styles.typeToggle}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={[styles.screenTitle, { color: theme.text }]}>
+            {editTransaction ? 'Edit Transaksi' : 'Transaksi Baru'}
+          </Text>
+        </View>
+
+        {/* Type Toggle Segmented Control */}
+        <View style={[styles.typeToggleContainer, { backgroundColor: theme.surface }]}>
           <TouchableOpacity
             style={[
-              styles.typeButton,
-              type === 'income' && styles.typeButtonActive,
-              { backgroundColor: type === 'income' ? COLORS.success : COLORS.border }
-            ]}
-            onPress={() => setType('income')}
-          >
-            <Text style={[
-              styles.typeButtonText,
-              type === 'income' && styles.typeButtonTextActive
-            ]}>
-              💰 Pemasukan
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.typeButton,
-              type === 'expense' && styles.typeButtonActive,
-              { backgroundColor: type === 'expense' ? COLORS.danger : COLORS.border }
+              styles.typeTab,
+              type === 'expense' && { backgroundColor: COLORS.danger + '15' }
             ]}
             onPress={() => setType('expense')}
           >
             <Text style={[
-              styles.typeButtonText,
-              type === 'expense' && styles.typeButtonTextActive
+              styles.typeTabText,
+              { color: type === 'expense' ? COLORS.danger : theme.textSecondary }
             ]}>
-              💸 Pengeluaran
+              Pengeluaran
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.typeTab,
+              type === 'income' && { backgroundColor: theme.primary + '15' }
+            ]}
+            onPress={() => setType('income')}
+          >
+            <Text style={[
+              styles.typeTabText,
+              { color: type === 'income' ? theme.primary : theme.textSecondary }
+            ]}>
+              Pemasukan
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Amount Input Section */}
-        <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Jumlah & Mata Uang</Text>
+        {/* Amount Section */}
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.label, { color: theme.textMuted }]}>JUMLAH</Text>
           
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.currencySelector}
-            contentContainerStyle={styles.currencySelectorContent}
-          >
-            {CURRENCIES.map((c) => (
-              <TouchableOpacity
-                key={c.code}
-                style={[
-                  styles.currencyPill,
-                  currency.code === c.code && styles.currencyPillActive,
-                  { borderColor: currency.code === c.code ? COLORS.primary : COLORS.border }
-                ]}
-                onPress={() => setCurrency(c)}
-              >
-                <Text style={[
-                  styles.currencyPillText,
-                  currency.code === c.code && { color: COLORS.primary as string, fontWeight: 'bold' }
-                ]}>
-                  {c.code}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
           <View style={styles.amountInputContainer}>
-            <Text style={styles.currencyPrefix}>{currency.symbol}</Text>
+            <TouchableOpacity 
+              style={[styles.currencySelect, { backgroundColor: theme.surfaceLight }]}
+              onPress={() => { /* Potential to show a picker but keeping the pills for now */ }}
+            >
+              <Text style={[styles.currencyText, { color: theme.primary }]}>{currency.code}</Text>
+            </TouchableOpacity>
+            
             <TextInput
-              style={styles.amountInput}
+              style={[styles.amountInput, { color: theme.text }]}
               placeholder="0"
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
-              placeholderTextColor={COLORS.textSecondary as string}
+              placeholderTextColor={theme.textMuted}
+              autoFocus={!editTransaction}
             />
           </View>
 
           {currency.code !== 'IDR' && (
-            <View style={styles.exchangeRateContainer}>
-              <Text style={styles.exchangeRateLabel}>Kurs (ke IDR):</Text>
+            <View style={[styles.rateBox, { backgroundColor: theme.surfaceLight }]}>
+              <Text style={[styles.rateLabel, { color: theme.textSecondary }]}>Kurs ke IDR</Text>
               <TextInput
-                style={styles.exchangeRateInput}
+                style={[styles.rateInput, { color: theme.text }]}
                 value={exchangeRate}
                 onChangeText={setExchangeRate}
                 keyboardType="numeric"
-                placeholder="Rate"
               />
             </View>
           )}
 
-          {amount && parseFloat(amount) > 0 && (
-            <View style={styles.previewContainer}>
-              <Text style={styles.amountPreview}>
-                Total Estimasi: {formatCurrency(parseFloat(amount) * (parseFloat(exchangeRate) || 1), 'IDR')}
-              </Text>
-            </View>
+          {amount && parseFloat(amount) > 0 && currency.code !== 'IDR' && (
+             <Text style={styles.previewText}>
+               Sekitar {formatCurrency(parseFloat(amount) * (parseFloat(exchangeRate) || 1), 'IDR')}
+             </Text>
           )}
         </View>
 
-        {/* Description Input */}
-        <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Deskripsi</Text>
-          <TextInput
-            style={globalStyles.input}
-            placeholder="Contoh: Makan siang di restoran"
-            value={description}
-            onChangeText={setDescription}
-            placeholderTextColor={COLORS.textSecondary as string}
-          />
-        </View>
-
-        {/* Category Picker (only for expenses) */}
-        {type === 'expense' && (
-          <View style={styles.inputGroup}>
-            <Text style={globalStyles.label}>Kategori</Text>
-            <TouchableOpacity
-              style={styles.categoryButton}
-              onPress={() => setShowCategoryPicker(true)}
-            >
-              {selectedCategory ? (
-                <>
-                  <View style={[styles.categoryIcon, { backgroundColor: selectedCategory.color }]}>
-                    <Text style={styles.categoryIconText}>{selectedCategory.icon}</Text>
-                  </View>
-                  <Text style={styles.categoryButtonText}>{selectedCategory.name}</Text>
-                </>
-              ) : (
-                <Text style={styles.categoryButtonPlaceholder}>Pilih Kategori</Text>
-              )}
-              <Text style={styles.chevron}>›</Text>
-            </TouchableOpacity>
+        {/* Meta Info Section */}
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.label, { color: theme.textMuted }]}>INFORMASI</Text>
+          
+          <View style={styles.inputRow}>
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Deskripsi</Text>
+            <TextInput
+              style={[styles.inputField, { color: theme.text }]}
+              placeholder="Apa untuk apa?"
+              value={description}
+              onChangeText={setDescription}
+              placeholderTextColor={theme.textMuted}
+            />
           </View>
-        )}
 
-        {/* Date Input */}
-        <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Tanggal</Text>
-          <TextInput
-            style={globalStyles.input}
-            value={date}
-            onChangeText={setDate}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={COLORS.textSecondary as string}
-          />
+          <View style={styles.divider} />
+
+          {type === 'expense' && (
+            <>
+              <TouchableOpacity 
+                style={styles.inputRow}
+                onPress={() => setShowCategoryPicker(true)}
+              >
+                <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Kategori</Text>
+                <View style={styles.categoryBadge}>
+                  {selectedCategory && (
+                    <Text style={{ marginRight: 8 }}>{selectedCategory.icon}</Text>
+                  )}
+                  <Text style={[styles.inputField, { color: theme.text }]}>
+                    {selectedCategory?.name || 'Pilih Kategori'}
+                  </Text>
+                  <Text style={[styles.chevron, { color: theme.textMuted }]}>›</Text>
+                </View>
+              </TouchableOpacity>
+              <View style={styles.divider} />
+            </>
+          )}
+
+          <View style={styles.inputRow}>
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Tanggal</Text>
+            <TextInput
+              style={[styles.inputField, { color: theme.text }]}
+              value={date}
+              onChangeText={setDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={theme.textMuted}
+            />
+          </View>
         </View>
 
-        {/* Notes Input */}
-        <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Catatan (Opsional)</Text>
+        {/* Notes Section */}
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.label, { color: theme.textMuted }]}>CATATAN TAMBAHAN</Text>
           <TextInput
-            style={[globalStyles.input, styles.notesInput]}
-            placeholder="Tambahkan catatan..."
+            style={[styles.notesArea, { color: theme.text }]}
+            placeholder="Ada yang perlu diingat?"
             value={notes}
             onChangeText={setNotes}
             multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-            placeholderTextColor={COLORS.textSecondary as string}
+            placeholderTextColor={theme.textMuted}
           />
         </View>
 
-        {/* Photo Receipt */}
-        <ImagePickerComponent
-          imageUri={photoUri}
-          onImageSelected={setPhotoUri}
-          onImageRemoved={() => setPhotoUri(null)}
-        />
+        {/* Photo Section */}
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.label, { color: theme.textMuted }]}>LAMPIRAN</Text>
+          <ImagePickerComponent
+            imageUri={photoUri}
+            onImageSelected={setPhotoUri}
+            onImageRemoved={() => setPhotoUri(null)}
+          />
+        </View>
 
-        {/* Save Button */}
         <TouchableOpacity
-          style={[globalStyles.buttonPrimary, styles.saveButton]}
+          style={[styles.saveBtn, { backgroundColor: theme.primary }]}
           onPress={handleSave}
         >
-          <Text style={globalStyles.buttonText}>💾 {editTransaction ? 'Perbarui' : 'Simpan'} Transaksi</Text>
+          <Text style={styles.saveBtnText}>
+            {editTransaction ? 'Perbarui Transaksi' : 'Simpan Transaksi'}
+          </Text>
         </TouchableOpacity>
+        
+        <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Category Picker Modal */}
       <CategoryPicker
         visible={showCategoryPicker}
         categories={categories}
@@ -303,145 +295,145 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation,
 };
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    padding: SPACING.lg,
-  },
-  typeToggle: {
-    flexDirection: 'row',
-    marginBottom: SPACING.xl,
-    gap: SPACING.sm,
-  },
-  typeButton: {
+  container: {
     flex: 1,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
+  },
+  scrollContent: {
+    padding: 24,
+    paddingTop: 60,
+  },
+  header: {
+    marginBottom: 24,
+  },
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  typeToggleContainer: {
+    flexDirection: 'row',
+    padding: 6,
+    borderRadius: 20,
+    marginBottom: 24,
+    ...SHADOWS.small,
+  },
+  typeTab: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 16,
     alignItems: 'center',
   },
-  typeButtonActive: {
+  typeTabText: {
+    fontSize: 14,
+    fontWeight: '800',
   },
-  typeButtonText: {
-    fontSize: FONT_SIZES.md as any,
-    fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.textLight as string,
+  card: {
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    ...SHADOWS.small,
   },
-  typeButtonTextActive: {
-    color: COLORS.textLight as string,
-  },
-  inputGroup: {
-    marginBottom: SPACING.lg,
+  label: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 16,
   },
   amountInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface as string,
-    borderWidth: 2,
-    borderColor: COLORS.primary as string,
-    borderRadius: BORDER_RADIUS.md,
-    paddingHorizontal: SPACING.md,
   },
-  currencyPrefix: {
-    fontSize: FONT_SIZES.xl as any,
-    fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text as string,
-    marginRight: SPACING.sm,
+  currencySelect: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginRight: 16,
+  },
+  currencyText: {
+    fontSize: 16,
+    fontWeight: '800',
   },
   amountInput: {
     flex: 1,
-    fontSize: FONT_SIZES.xxl as any,
-    fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text as string,
-    paddingVertical: SPACING.md,
-  },
-  amountPreview: {
-    fontSize: FONT_SIZES.sm as any,
-    color: COLORS.textSecondary as string,
-    marginTop: SPACING.xs,
-  },
-  categoryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface as string,
-    borderWidth: 1,
-    borderColor: COLORS.border as string,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-  },
-  categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BORDER_RADIUS.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.md,
-  },
-  categoryIconText: {
-    fontSize: 20,
-  },
-  categoryButtonText: {
-    flex: 1,
-    fontSize: FONT_SIZES.md as any,
-    color: COLORS.text as string,
-    fontWeight: FONT_WEIGHTS.medium as any,
-  },
-  categoryButtonPlaceholder: {
-    flex: 1,
-    fontSize: FONT_SIZES.md as any,
-    color: COLORS.textSecondary as string,
-  },
-  chevron: {
-    fontSize: 24,
-    color: COLORS.textSecondary as string,
-  },
-  notesInput: {
-    minHeight: 80,
-  },
-  saveButton: {
-    marginTop: SPACING.md,
-    marginBottom: SPACING.xl,
-  },
-  currencySelector: {
-    marginBottom: SPACING.sm,
-  },
-  currencySelectorContent: {
-    paddingRight: SPACING.md,
-  },
-  currencyPill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginRight: SPACING.sm,
-    backgroundColor: COLORS.surface as string,
-  },
-  currencyPillActive: {
-    backgroundColor: `${COLORS.primary}15`,
-  },
-  currencyPillText: {
-    fontSize: FONT_SIZES.sm as any,
-    color: COLORS.text as string,
-  },
-  exchangeRateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: SPACING.sm,
-    backgroundColor: COLORS.background as string,
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-  },
-  exchangeRateLabel: {
-    fontSize: FONT_SIZES.sm as any,
-    color: COLORS.textSecondary as string,
-    marginRight: SPACING.sm,
-  },
-  exchangeRateInput: {
-    flex: 1,
-    fontSize: FONT_SIZES.sm as any,
-    color: COLORS.text as string,
-    fontWeight: 'bold',
+    fontSize: 40,
+    fontWeight: '900',
+    letterSpacing: -1,
     padding: 0,
   },
-  previewContainer: {
-    marginTop: SPACING.xs,
+  rateBox: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  rateLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  rateInput: {
+    fontSize: 14,
+    fontWeight: '800',
+    padding: 0,
+    textAlign: 'right',
+    minWidth: 80,
+  },
+  previewText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  inputLabel: {
+    width: 90,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  inputField: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    padding: 0,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginVertical: 4,
+  },
+  categoryBadge: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chevron: {
+    fontSize: 20,
+    marginLeft: 8,
+  },
+  notesArea: {
+    fontSize: 15,
+    fontWeight: '600',
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  saveBtn: {
+    paddingVertical: 18,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.medium,
+    marginTop: 12,
+  },
+  saveBtnText: {
+    color: COLORS.navy,
+    fontSize: 16,
+    fontWeight: '900',
   },
 });
 

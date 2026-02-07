@@ -4,6 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { formatCurrency } from '../utils/currency';
 import { formatDateShort } from '../utils/calculations';
 import { Transaction, Category } from '../types';
+import { BORDER_RADIUS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '../styles/theme';
 
 interface TransactionCardProps {
   transaction: Transaction;
@@ -12,29 +13,26 @@ interface TransactionCardProps {
 }
 
 const TransactionCard: React.FC<TransactionCardProps> = ({ transaction, category, onPress }) => {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const isIncome = transaction.type === 'income';
   
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    marginHorizontal: 4,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: theme.divider,
   };
 
-  const iconBackgroundColor = category?.color ? 
-    (isDark ? `${category.color}20` : `${category.color}15`) : 
-    (isDark ? 'rgba(255,255,255,0.05)' : '#F3F4F6');
+  const iconBackgroundColor = category?.color ? `${category.color}15` : theme.surfaceLight;
 
   return (
     <TouchableOpacity 
       style={containerStyle} 
       onPress={onPress}
-      activeOpacity={0.6}
+      activeOpacity={0.7}
     >
-      <View style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}>
+      <View style={[styles.iconContainer, { backgroundColor: iconBackgroundColor, borderColor: category?.color || theme.border, borderWidth: 1 }]}>
         <Text style={styles.icon}>{category?.icon || '📦'}</Text>
       </View>
 
@@ -46,10 +44,10 @@ const TransactionCard: React.FC<TransactionCardProps> = ({ transaction, category
           <Text 
             style={[
               styles.amount, 
-              { color: isIncome ? theme.success : theme.text }
+              { color: isIncome ? theme.income : theme.text }
             ]}
           >
-            {isIncome ? '+' : ''} {formatCurrency(transaction.amount, transaction.currency)}
+            {isIncome ? '+' : '-'} {formatCurrency(transaction.amount, transaction.currency)}
           </Text>
         </View>
 
@@ -57,8 +55,8 @@ const TransactionCard: React.FC<TransactionCardProps> = ({ transaction, category
           <Text style={[styles.category, { color: theme.textSecondary }]}>
             {category?.name || 'Umum'} • {formatDateShort(transaction.date || transaction.createdAt)}
           </Text>
-          {transaction.photoUri && (
-             <Text style={{ fontSize: 10, marginLeft: 4 }}>📸</Text>
+          {transaction.isRecurring && (
+            <Text style={[styles.recurringIcon, { color: theme.primary }]}>🔄</Text>
           )}
         </View>
       </View>
@@ -68,15 +66,16 @@ const TransactionCard: React.FC<TransactionCardProps> = ({ transaction, category
 
 const styles = StyleSheet.create({
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: BORDER_RADIUS.md,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    borderWidth: 1,
   },
   icon: {
-    fontSize: 22,
+    fontSize: 24,
   },
   details: {
     flex: 1,
@@ -93,18 +92,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   description: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.bold as any,
     flex: 1,
     marginRight: 8,
   },
   amount: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.black as any,
   },
   category: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: FONT_SIZES.sm - 1,
+    fontWeight: FONT_WEIGHTS.medium as any,
+  },
+  recurringIcon: {
+    fontSize: 10,
+    marginLeft: 6,
   },
 });
 

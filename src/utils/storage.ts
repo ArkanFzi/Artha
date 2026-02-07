@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { Transaction, Category, Budget, Goal, RecurringTransaction } from '../types';
 
 const DATABASE_NAME = 'artha.db';
@@ -23,6 +24,43 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: '6', name: 'Kesehatan', icon: '🏥', color: '#FCBAD3', isDefault: true },
   { id: '7', name: 'Pendidikan', icon: '📚', color: '#A8D8EA', isDefault: true },
   { id: '8', name: 'Lainnya', icon: '📦', color: '#FFFFD2', isDefault: true },
+];
+
+// Mock data for web platform
+const MOCK_TRANSACTIONS: Transaction[] = [
+  {
+    id: '1',
+    amount: 50000,
+    categoryId: '1',
+    type: 'expense',
+    description: 'Makan siang',
+    note: 'Nasi Padang',
+    date: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    isRecurring: false,
+  },
+  {
+    id: '2',
+    amount: 1000000,
+    categoryId: '7',
+    type: 'income',
+    description: 'Gaji bulanan',
+    note: '',
+    date: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    isRecurring: false,
+  },
+  {
+    id: '3',
+    amount: 25000,
+    categoryId: '2',
+    type: 'expense',
+    description: 'Transportasi',
+    note: 'Grab ke kantor',
+    date: new Date(Date.now() - 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    isRecurring: false,
+  },
 ];
 
 export const initDb = async () => {
@@ -59,7 +97,7 @@ export const initDb = async () => {
       amount REAL NOT NULL,
       description TEXT,
       categoryId TEXT,
-      frequency TEXT,
+      frequency TEXT CHECK(frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
       startDate TEXT,
       endDate TEXT,
       lastGenerated TEXT,
@@ -78,12 +116,24 @@ export const initDb = async () => {
     CREATE TABLE IF NOT EXISTS goals (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      targetAmount REAL,
-      currentAmount REAL,
+      targetAmount REAL NOT NULL,
+      currentAmount REAL DEFAULT 0,
       icon TEXT,
       color TEXT,
       deadline TEXT,
       createdAt TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY,
+      type TEXT CHECK(type IN ('budget_warning', 'bill_reminder', 'goal_achieved', 'recurring_transaction', 'general')),
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      isRead INTEGER DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      relatedId TEXT,
+      icon TEXT,
+      priority TEXT CHECK(priority IN ('low', 'medium', 'high')) DEFAULT 'medium'
     );
   `);
 
@@ -98,18 +148,22 @@ export const initDb = async () => {
     }
   }
 
-  // Handle migration from AsyncStorage
-  const isMigrated = await AsyncStorage.getItem(MIGRATION_KEY);
-  if (!isMigrated) {
-    await migrateFromAsyncStorage();
+  // Auto migration from AsyncStorage
+  try {
+    const migrated = await AsyncStorage.getItem(MIGRATION_KEY);
+    if (!migrated) {
+      await migrateFromAsyncStorage();
+    }
+  } catch (error) {
+    console.log('Migration check/execution error:', error);
   }
 };
 
 const migrateFromAsyncStorage = async () => {
-  console.log('Starting migration from AsyncStorage to SQLite...');
-  const db = await getDb();
-
   try {
+    console.log('Starting migration from AsyncStorage to SQLite...');
+    const db = await getDb();
+
     // 1. Transactions
     const transactionsJson = await AsyncStorage.getItem('@transactions');
     if (transactionsJson) {
@@ -121,24 +175,30 @@ const migrateFromAsyncStorage = async () => {
             isRecurring, recurringId
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            t.id, t.amount, t.categoryId, t.type, t.description || '', t.note || '', 
-            t.date, t.createdAt, t.isRecurring ? 1 : 0, t.recurringId || null
+            t.id, 
+            t.amount, 
+            t.categoryId, 
+            t.type, 
+            t.description, 
+            t.note || '', 
+            t.date, 
+            t.createdAt, 
+            t.isRecurring ? 1 : 0, 
+            t.recurringId || null
           ]
         );
       }
     }
 
-    // 2. Custom Categories
+    // 2. Categories
     const categoriesJson = await AsyncStorage.getItem('@categories');
     if (categoriesJson) {
       const categories: Category[] = JSON.parse(categoriesJson);
       for (const cat of categories) {
-        if (!cat.isDefault) {
-          await db.runAsync(
-            'INSERT OR REPLACE INTO categories (id, name, icon, color, isDefault) VALUES (?, ?, ?, ?, ?)',
-            [cat.id, cat.name, cat.icon, cat.color, 0]
-          );
-        }
+        await db.runAsync(
+          'INSERT OR REPLACE INTO categories (id, name, icon, color, isDefault) VALUES (?, ?, ?, ?, ?)',
+          [cat.id, cat.name, cat.icon, cat.color, 0]
+        );
       }
     }
 
@@ -202,16 +262,28 @@ export const saveTransaction = async (transaction: Omit<Transaction, 'id' | 'cre
       isRecurring, recurringId
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      id, transaction.amount, transaction.categoryId, transaction.type, 
-      transaction.description || '', transaction.note || '', transaction.date, createdAt,
-      transaction.isRecurring ? 1 : 0, transaction.recurringId || null
+      id, 
+      transaction.amount, 
+      transaction.categoryId, 
+      transaction.type, 
+      transaction.description, 
+      transaction.note || '', 
+      transaction.date, 
+      createdAt,
+      transaction.isRecurring ? 1 : 0,
+      transaction.recurringId || null
     ]
   );
 
-  return { id, ...transaction, createdAt } as Transaction;
+  return { id, ...transaction, createdAt };
 };
 
 export const getTransactions = async (): Promise<Transaction[]> => {
+  // Return mock data for web platform
+  if (Platform.OS === 'web') {
+    return MOCK_TRANSACTIONS;
+  }
+  
   const db = await getDb();
   const rows = await db.getAllAsync<any>('SELECT * FROM transactions ORDER BY date DESC, createdAt DESC');
   
@@ -229,6 +301,11 @@ export const deleteTransaction = async (id: string): Promise<void> => {
 
 // Category operations
 export const getCategories = async (): Promise<Category[]> => {
+  // Return default categories for web platform
+  if (Platform.OS === 'web') {
+    return DEFAULT_CATEGORIES;
+  }
+  
   const db = await getDb();
   const rows = await db.getAllAsync<any>('SELECT * FROM categories');
   return rows.map(r => ({
@@ -478,4 +555,81 @@ export const importData = async (data: any): Promise<void> => {
       );
     }
   }
+};
+
+// Notification operations
+export const createNotification = async (notification: Omit<import('../types').Notification, 'id'>): Promise<import('../types').Notification> => {
+  // Skip for web
+  if (Platform.OS === 'web') {
+    return { id: Date.now().toString(), ...notification };
+  }
+  
+  const db = await getDb();
+  const id = Date.now().toString();
+  
+  await db.runAsync(
+    `INSERT INTO notifications (
+      id, type, title, message, isRead, createdAt, relatedId, icon, priority
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      notification.type,
+      notification.title,
+      notification.message,
+      notification.isRead ? 1 : 0,
+      notification.createdAt,
+      notification.relatedId || null,
+      notification.icon,
+      notification.priority
+    ]
+  );
+  
+  return { id, ...notification };
+};
+
+export const getNotifications = async (): Promise<import('../types').Notification[]> => {
+  // Return empty for web
+  if (Platform.OS === 'web') {
+    return [];
+  }
+  
+  const db = await getDb();
+  const rows = await db.getAllAsync<any>('SELECT * FROM notifications ORDER BY createdAt DESC');
+  
+  return rows.map(r => ({
+    ...r,
+    isRead: Boolean(r.isRead)
+  }));
+};
+
+export const getUnreadNotificationsCount = async (): Promise<number> => {
+  // Return 0 for web
+  if (Platform.OS === 'web') {
+    return 0;
+  }
+  
+  const db = await getDb();
+  const result = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM notifications WHERE isRead = 0');
+  return result?.count || 0;
+};
+
+export const markNotificationAsRead = async (id: string): Promise<void> => {
+  if (Platform.OS === 'web') return;
+  
+  const db = await getDb();
+  await db.runAsync('UPDATE notifications SET isRead = 1 WHERE id = ?', [id]);
+};
+
+export const markAllNotificationsAsRead = async (): Promise<void> => {
+  if (Platform.OS === 'web') return;
+  
+  const db = await getDb();
+  await db.runAsync('UPDATE notifications SET isRead = 1');
+};
+
+export const deleteNotification = async (id: string): Promise<void> => {
+  if (Platform.OS === 'web') return;
+  
+  const db = await getDb();
+  await db.runAsync('DELETE FROM notifications WHERE id = ?', [id]);
 };

@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert, ViewStyle, TextStyle } from 'react-native';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Switch, 
+  TouchableOpacity, 
+  Alert, 
+  Dimensions 
+} from 'react-native';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePIN } from '../contexts/PINContext';
 import { isPINSet, setPINEnabled, getPINEnabled, deletePIN } from '../utils/pinStorage';
@@ -13,6 +22,8 @@ import {
 } from '../utils/notificationService';
 import { NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
+
+const { width } = Dimensions.get('window');
 
 interface SettingsScreenProps {
   navigation: NavigationProp<RootStackParamList, 'Settings'>;
@@ -136,291 +147,229 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
     );
   };
 
-  const dynamicStyles = {
-    container: {
-      flex: 1,
-      backgroundColor: theme.background,
-    } as ViewStyle,
-    sectionTitle: {
-      fontSize: FONT_SIZES.lg,
-      fontWeight: FONT_WEIGHTS.bold,
-      color: theme.text,
-      marginBottom: SPACING.md,
-    } as TextStyle,
-    settingItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      backgroundColor: theme.surface,
-      padding: SPACING.md,
-      borderRadius: BORDER_RADIUS.md,
-      marginBottom: SPACING.sm,
-    } as ViewStyle,
-    settingLabel: {
-      fontSize: FONT_SIZES.md,
-      color: theme.text,
-      flex: 1,
-    } as TextStyle,
-    settingDescription: {
-      fontSize: FONT_SIZES.sm,
-      color: theme.textSecondary,
-      marginTop: SPACING.xs,
-    } as TextStyle,
-  };
+  const renderSettingItem = (
+    label: string, 
+    subLabel: string, 
+    icon: string, 
+    value?: boolean, 
+    onToggle?: () => void, 
+    onPress?: () => void,
+    isDestructive?: boolean
+  ) => (
+    <TouchableOpacity 
+      style={styles.settingItem} 
+      onPress={onPress} 
+      activeOpacity={onPress ? 0.7 : 1}
+      disabled={onToggle !== undefined}
+    >
+      <View style={[styles.iconBox, { backgroundColor: theme.surfaceLight }]}>
+        <Text style={{ fontSize: 20 }}>{icon}</Text>
+      </View>
+      <View style={styles.settingInfo}>
+        <Text style={[styles.settingLabel, { color: isDestructive ? COLORS.danger : theme.text }]}>{label}</Text>
+        <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>{subLabel}</Text>
+      </View>
+      {onToggle !== undefined ? (
+        <Switch
+          value={value}
+          onValueChange={onToggle}
+          trackColor={{ false: theme.border, true: theme.primary }}
+          thumbColor={COLORS.white}
+          ios_backgroundColor={theme.border}
+        />
+      ) : onPress ? (
+        <Text style={[styles.chevron, { color: theme.textMuted }]}>›</Text>
+      ) : null}
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={dynamicStyles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Appearance Section */}
-        <View style={styles.section}>
-          <Text style={dynamicStyles.sectionTitle}>🎨 Tampilan</Text>
-          
-          <View style={dynamicStyles.settingItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={dynamicStyles.settingLabel}>Dark Mode</Text>
-              <Text style={dynamicStyles.settingDescription}>
-                {isDark ? 'Mode gelap aktif' : 'Mode terang aktif'}
-              </Text>
-            </View>
-            <Switch
-              value={isDark}
-              onValueChange={toggleTheme}
-              trackColor={{ false: '#ccc', true: COLORS.primary }}
-              thumbColor={isDark ? COLORS.primaryLight : '#f4f3f4'}
-            />
-          </View>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={[styles.screenTitle, { color: theme.text }]}>Pengaturan</Text>
+          <Text style={[styles.screenSubTitle, { color: theme.textSecondary }]}>Kustomisasi pengalaman Anda</Text>
         </View>
 
-        {/* Cloud Sync Section */}
-        <View style={styles.section}>
-          <Text style={dynamicStyles.sectionTitle}>☁️ Cloud Sync</Text>
-          <TouchableOpacity
-            style={dynamicStyles.settingItem}
-            onPress={() => (navigation as any).navigate('SyncAccount')}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={dynamicStyles.settingLabel}>Backup & Restore</Text>
-              <Text style={dynamicStyles.settingDescription}>
-                Sinkronisasi data ke cloud agar aman
-              </Text>
-            </View>
-            <Text style={{ color: theme.primary, fontSize: 18 }}>›</Text>
-          </TouchableOpacity>
+        {/* Appearance Card */}
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>TAMPILAN</Text>
+          {renderSettingItem(
+            'Mode Gelap',
+            isDark ? 'Gunakan tema gelap premium' : 'Gunakan tema terang bersih',
+            '🌙',
+            isDark,
+            toggleTheme
+          )}
         </View>
 
-        {/* Security Section */}
-        <View style={styles.section}>
-          <Text style={dynamicStyles.sectionTitle}>🔐 Keamanan</Text>
-          
-          <View style={dynamicStyles.settingItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={dynamicStyles.settingLabel}>PIN Keamanan</Text>
-              <Text style={dynamicStyles.settingDescription}>
-                {hasPIN ? (pinEnabled ? 'PIN aktif' : 'PIN dinonaktifkan') : 'Belum ada PIN'}
-              </Text>
-            </View>
-            <Switch
-              value={pinEnabled}
-              onValueChange={handlePINToggle}
-              trackColor={{ false: '#ccc', true: COLORS.primary }}
-              thumbColor={pinEnabled ? COLORS.primaryLight : '#f4f3f4'}
-            />
-          </View>
-
+        {/* Security Card */}
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>KEAMANAN</Text>
+          {renderSettingItem(
+            'PIN Keamanan',
+            pinEnabled ? 'Akses aplikasi dilindungi PIN' : 'Aktifkan PIN untuk keamanan',
+            '🔐',
+            pinEnabled,
+            handlePINToggle
+          )}
           {hasPIN && (
             <>
-              <TouchableOpacity
-                style={dynamicStyles.settingItem}
-                onPress={handleChangePIN}
-              >
-                <Text style={dynamicStyles.settingLabel}>Ubah PIN</Text>
-                <Text style={{ color: theme.primary, fontSize: 18 }}>›</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={dynamicStyles.settingItem}
-                onPress={handleResetPIN}
-              >
-                <Text style={[dynamicStyles.settingLabel, { color: theme.error }]}>Reset PIN</Text>
-                <Text style={{ color: theme.error, fontSize: 18 }}>›</Text>
-              </TouchableOpacity>
+              <View style={styles.divider} />
+              {renderSettingItem('Ubah PIN', 'Ganti PIN keamanan Anda', '🔑', undefined, undefined, handleChangePIN)}
+              <View style={styles.divider} />
+              {renderSettingItem('Reset PIN', 'Hapus PIN yang ada', '🗑️', undefined, undefined, handleResetPIN, true)}
             </>
           )}
         </View>
 
-        {/* Notifications Section */}
-        <View style={styles.section}>
-          <Text style={dynamicStyles.sectionTitle}>🔔 Notifikasi</Text>
-          
-          {!hasPermission && (
-            <View style={styles.warningCard}>
-              <Text style={styles.warningText}>
-                ⚠️ Izin notifikasi belum diaktifkan. Tap untuk mengaktifkan.
-              </Text>
-              <TouchableOpacity
-                style={styles.warningButton}
-                onPress={checkPermissions}
-              >
-                <Text style={styles.warningButtonText}>Aktifkan Izin</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Notifications Card */}
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>NOTIFIKASI</Text>
+          {renderSettingItem(
+            'Pengingat Harian',
+            `Setiap jam ${settings.reminderTime}`,
+            '⏰',
+            settings.dailyReminder,
+            () => handleToggle('dailyReminder')
           )}
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Pengingat Harian</Text>
-              <Text style={styles.settingDescription}>
-                Ingatkan untuk input transaksi setiap hari jam {settings.reminderTime}
-              </Text>
-            </View>
-            <Switch
-              value={settings.dailyReminder}
-              onValueChange={() => handleToggle('dailyReminder')}
-              trackColor={{ false: COLORS.border as string, true: COLORS.primary }}
-              thumbColor={COLORS.surface}
-            />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Alert Budget</Text>
-              <Text style={styles.settingDescription}>
-                Notifikasi ketika budget kategori hampir habis ({'>'}80%)
-              </Text>
-            </View>
-            <Switch
-              value={settings.budgetAlerts}
-              onValueChange={() => handleToggle('budgetAlerts')}
-              trackColor={{ false: COLORS.border as string, true: COLORS.primary }}
-              thumbColor={COLORS.surface}
-            />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Review Bulanan</Text>
-              <Text style={styles.settingDescription}>
-                Pengingat review keuangan setiap awal bulan
-              </Text>
-            </View>
-            <Switch
-              value={settings.monthlyReview}
-              onValueChange={() => handleToggle('monthlyReview')}
-              trackColor={{ false: COLORS.border as string, true: COLORS.primary}}
-              thumbColor={COLORS.surface}
-            />
-          </View>
+          <View style={styles.divider} />
+          {renderSettingItem(
+            'Alert Anggaran',
+            'Peringatan saat budget >80%',
+            '📉',
+            settings.budgetAlerts,
+            () => handleToggle('budgetAlerts')
+          )}
+          <View style={styles.divider} />
+          {renderSettingItem(
+            'Review Bulanan',
+            'Ringkasan setiap awal bulan',
+            '📅',
+            settings.monthlyReview,
+            () => handleToggle('monthlyReview')
+          )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>🛠️ Lainnya</Text>
-          
-          <TouchableOpacity
-            style={styles.dangerButton}
-            onPress={handleClearAllNotifications}
-          >
-            <Text style={styles.dangerButtonText}>🗑️ Hapus Semua Notifikasi</Text>
-          </TouchableOpacity>
+        {/* Data Card */}
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>DATA & CLOUD</Text>
+          {renderSettingItem(
+            'Sinkronisasi Cloud',
+            'Backup & restore data Anda',
+            '☁️',
+            undefined,
+            undefined,
+            () => (navigation as any).navigate('SyncAccount')
+          )}
+          <View style={styles.divider} />
+          {renderSettingItem(
+            'Hapus Notifikasi',
+            'Bersihkan jadwal pengingat',
+            '🧹',
+            undefined,
+            undefined,
+            handleClearAllNotifications,
+            true
+          )}
         </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>💡 Tips</Text>
-          <Text style={styles.infoText}>
-            • Aktifkan pengingat harian untuk konsisten mencatat keuangan{'\n'}
-            • Alert budget membantu Anda tetap dalam batas pengeluaran{'\n'}
-            • Review bulanan penting untuk evaluasi dan perencanaan
-          </Text>
+        <View style={styles.footer}>
+          <Text style={[styles.versionText, { color: theme.textMuted }]}>Artha Premium v2.4.0</Text>
+          <Text style={[styles.footerText, { color: theme.textMuted }]}>Dibuat dengan ❤️ untuk finansial Anda</Text>
         </View>
+        
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   scrollContent: {
-    padding: SPACING.lg,
+    padding: 24,
+    paddingTop: 60,
   },
-  section: {
-    marginBottom: SPACING.xl,
+  header: {
+    marginBottom: 32,
   },
-  sectionTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold,
-    marginBottom: SPACING.md,
+  screenTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  screenSubTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  card: {
+    borderRadius: 28,
+    padding: 12,
+    marginBottom: 24,
+    ...SHADOWS.small,
+  },
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginVertical: 12,
+    marginLeft: 12,
   },
   settingItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
+    padding: 12,
+    borderRadius: 20,
+  },
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   settingInfo: {
     flex: 1,
-    marginRight: SPACING.md,
   },
-  settingTitle: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text as string,
-    marginBottom: SPACING.xs,
+  settingLabel: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   settingDescription: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary as string,
-    lineHeight: 18,
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
   },
-  warningCard: {
-    backgroundColor: '#FFF3CD',
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
+  chevron: {
+    fontSize: 24,
+    marginLeft: 8,
   },
-  warningText: {
-    fontSize: FONT_SIZES.sm,
-    color: '#856404',
-    marginBottom: SPACING.sm,
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    marginHorizontal: 12,
   },
-  warningButton: {
-    backgroundColor: '#FFC107',
-    borderRadius: BORDER_RADIUS.sm,
-    padding: SPACING.sm,
+  footer: {
     alignItems: 'center',
+    marginTop: 16,
   },
-  warningButtonText: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: '#856404',
+  versionText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 4,
   },
-  dangerButton: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 2,
-    borderColor: COLORS.danger,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    alignItems: 'center',
-  },
-  dangerButtonText: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.danger,
-  },
-  infoCard: {
-    backgroundColor: '#E3F2FD',
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-  },
-  infoTitle: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: '#1976D2',
-    marginBottom: SPACING.sm,
-  },
-  infoText: {
-    fontSize: FONT_SIZES.sm,
-    color: '#1565C0',
-    lineHeight: 20,
+  footerText: {
+    fontSize: 11,
+    fontWeight: '500',
   },
 });
 

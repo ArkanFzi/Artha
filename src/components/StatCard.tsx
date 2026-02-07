@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, FONT_WEIGHTS, SHADOWS, SPACING } from '../styles/theme';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -30,10 +31,10 @@ const StatCard: React.FC<StatCardProps> = ({
   size = 'medium',
   layout = 'vertical'
 }) => {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
 
-  const backgroundColor = isDark ? theme.surfaceVariant : theme.surface;
-  const borderColor = isDark ? theme.border : '#F3F4F6';
+  const backgroundColor = theme.surface;
+  const borderColor = theme.border;
   const textColor = theme.text;
   const subTextColor = theme.textSecondary;
 
@@ -42,11 +43,11 @@ const StatCard: React.FC<StatCardProps> = ({
       case 'small':
         return { iconSize: 18, valueSize: 18, titleSize: 11, padding: 12, fullWidth: false };
       case 'large':
-        return { iconSize: 28, valueSize: 28, titleSize: 14, padding: 18, fullWidth: false };
+        return { iconSize: 28, valueSize: 28, titleSize: 14, padding: 20, fullWidth: false };
       case 'full':
-        return { iconSize: 24, valueSize: 24, titleSize: 13, padding: 16, fullWidth: true };
+        return { iconSize: 24, valueSize: 24, titleSize: 13, padding: 18, fullWidth: true };
       default: // medium
-        return { iconSize: 20, valueSize: 22, titleSize: 12, padding: 14, fullWidth: false };
+        return { iconSize: 20, valueSize: 22, titleSize: 12, padding: 16, fullWidth: false };
     }
   };
 
@@ -64,7 +65,7 @@ const StatCard: React.FC<StatCardProps> = ({
       {layout === 'vertical' ? (
         <>
           <View style={styles.header}>
-            <View style={[styles.iconContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F0F2F5' }]}>
+            <View style={[styles.iconContainer, { backgroundColor: theme.surfaceLight }]}>
               {typeof icon === 'string' ? (
                 <Text style={[styles.icon, { fontSize: sizeStyles.iconSize }]}>{icon}</Text>
               ) : (
@@ -78,17 +79,19 @@ const StatCard: React.FC<StatCardProps> = ({
             <Text style={[styles.value, { fontSize: sizeStyles.valueSize, color: textColor }]} numberOfLines={1}>
               {value}
             </Text>
-            <Text style={[styles.title, { fontSize: sizeStyles.titleSize, color: subTextColor }]} numberOfLines={1}>{title}</Text>
+            <Text style={[styles.title, { fontSize: sizeStyles.titleSize, color: subTextColor }]} numberOfLines={1}>
+              {title}
+            </Text>
             {subtitle && (
-              <View style={[styles.subtitleBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F9FAFB' }]}>
-                <Text style={[styles.subtitle, { color: theme.success }]} numberOfLines={1}>{subtitle}</Text>
+              <View style={[styles.subtitleBadge, { backgroundColor: theme.surfaceLight }]}>
+                <Text style={[styles.subtitle, { color: theme.primary }]} numberOfLines={1}>{subtitle}</Text>
               </View>
             )}
           </View>
         </>
       ) : (
         <View style={styles.horizontalLayout}>
-          <View style={[styles.iconContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F0F2F5', marginRight: 16 }]}>
+          <View style={[styles.iconContainer, { backgroundColor: theme.surfaceLight, marginRight: 16 }]}>
             {typeof icon === 'string' ? (
               <Text style={[styles.icon, { fontSize: sizeStyles.iconSize }]}>{icon}</Text>
             ) : (
@@ -102,8 +105,8 @@ const StatCard: React.FC<StatCardProps> = ({
             </Text>
           </View>
            {subtitle && (
-              <View style={[styles.miniBadge, { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.1)' : '#ECFDF5' }]}>
-                <Text style={[styles.miniBadgeText, { color: theme.success }]}>{subtitle}</Text>
+              <View style={[styles.miniBadge, { backgroundColor: theme.primaryLight }]}>
+                <Text style={[styles.miniBadgeText, { color: theme.primaryDark }]}>{subtitle}</Text>
               </View>
             )}
         </View>
@@ -118,7 +121,7 @@ const StatCard: React.FC<StatCardProps> = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity style={containerStyle} onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity style={containerStyle} onPress={onPress} activeOpacity={0.8}>
         {content}
       </TouchableOpacity>
     );
@@ -130,23 +133,19 @@ const StatCard: React.FC<StatCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: 4,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 1,
+    margin: 6,
+    borderRadius: BORDER_RADIUS.lg,
+    ...SHADOWS.medium,
   },
   containerFull: {
     flex: undefined,
     width: '100%',
     marginHorizontal: 0,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   card: {
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: 16,
     borderWidth: 1,
   },
   cardHorizontal: {
@@ -154,18 +153,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     padding: 16,
-    minHeight: 85,
+    minHeight: 90,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -173,33 +172,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    opacity: 0.7,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    opacity: 0.8,
   },
   content: {
   },
   value: {
-    fontWeight: '700',
-    marginBottom: 2,
+    fontWeight: FONT_WEIGHTS.black as any,
+    marginBottom: 4,
     letterSpacing: -0.5,
   },
   title: {
-    fontWeight: '500',
-    opacity: 0.8,
+    fontWeight: FONT_WEIGHTS.semibold as any,
+    opacity: 0.9,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontSize: 10,
   },
   subtitleBadge: {
-    marginTop: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    marginTop: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
     alignSelf: 'flex-start',
   },
   subtitle: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.2,
+    fontSize: 11,
+    fontWeight: FONT_WEIGHTS.bold as any,
   },
   horizontalLayout: {
     flexDirection: 'row',
@@ -207,13 +208,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   miniBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 100,
   },
   miniBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHTS.bold as any,
   },
 });
 

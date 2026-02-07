@@ -19,6 +19,8 @@ import PINVerifyScreen from '../screens/PINVerifyScreen';
 import SyncAccountScreen from '../screens/SyncAccountScreen';
 import GoalsScreen from '../screens/GoalsScreen';
 import AddGoalScreen from '../screens/AddGoalScreen';
+import TransactionsScreen from '../screens/TransactionsScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 
 import { Transaction, Goal, RecurringTransaction } from '../types';
 
@@ -38,6 +40,7 @@ export type RootStackParamList = {
   Goals: undefined;
   AddGoal: { goal?: Goal } | undefined;
   Transactions: undefined;
+  Notifications: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -102,12 +105,12 @@ const AppNavigator = () => {
         <Stack.Screen 
           name="Main"
           component={HomeScreen}
-          options={{ title: 'Keuangan Saya' }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="Home" 
           component={HomeScreen}
-          options={{ title: 'Keuangan Saya' }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="AddTransaction" 
@@ -158,6 +161,16 @@ const AppNavigator = () => {
           name="AddGoal" 
           component={AddGoalScreen}
           options={{ title: 'Tambah Target', presentation: 'modal' }}
+        />
+        <Stack.Screen 
+          name="Transactions" 
+          component={TransactionsScreen}
+          options={{ title: 'Semua Transaksi' }}
+        />
+        <Stack.Screen 
+          name="Notifications" 
+          component={NotificationsScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

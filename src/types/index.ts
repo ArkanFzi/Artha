@@ -59,6 +59,21 @@ export interface RecurringTransaction {
   createdAt: string;
 }
 
+export type NotificationType = 'budget_warning' | 'bill_reminder' | 'goal_achieved' | 'recurring_transaction' | 'general';
+export type NotificationPriority = 'low' | 'medium' | 'high';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  relatedId?: string;
+  icon: string;
+  priority: NotificationPriority;
+}
+
 export interface InvestmentRecommendation {
   percentage: number;
   remainingBudget: number;
@@ -83,13 +98,17 @@ export interface InvestmentSuggestion {
 export interface ThemeColors {
   background: string;
   surface: string;
+  surfaceLight: string;
   surfaceVariant: string;
   surfaceElevated?: string;
   primary: string;
   primaryDark: string;
   primaryLight: string;
+  secondary: string;
+  accent: string;
   text: string;
   textSecondary: string;
+  textMuted: string;
   textLight: string;
   textDisabled: string;
   success: string;
