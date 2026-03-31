@@ -1,12 +1,12 @@
 # Artha - Smart Financial Management 💰
 
-[![Expo](https://img.shields.io/badge/EXPO-SDK_50+-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev)
-[![React Native](https://img.shields.io/badge/React_Native-0.73-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev)
+[![Expo](https://img.shields.io/badge/EXPO-SDK_54-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React_Native-0.76-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-Backend-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](./LICENSE)
+[![SQLite](https://img.shields.io/badge/SQLite-Local_DB-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 
-> **Artha** (Sanskerta: *Kekayaan*) adalah aplikasi manajemen keuangan pribadi yang modern, aman, dan intuitif. Dirancang untuk membantu Anda mencapai kebebasan finansial melalui pencatatan yang mudah dan analisis yang mendalam.
+> **Artha** (Sanskerta: *Kekayaan*) adalah aplikasi manajemen keuangan pribadi yang modern, aman, dan intuitif. Dirancang dengan **Premium UI** yang mendukung **Light & Dark Mode** untuk membantu Anda mencapai kebebasan finansial melalui pencatatan yang cerdas dan analisis mendalam.
 
 ---
 
@@ -22,58 +22,54 @@
 
 ---
 
-## ✨ Fitur Utama
+## 📱 Ringkasan Fitur
 
-### 1. 💰 Smart Tracking
-- **Pencatatan Cepat**: Input transaksi dalam hitungan detik.
-- **Kategori Fleksibel**: Kustomisasi kategori pemasukan dan pengeluaran.
-- **Photo Receipts**: Simpan bukti struk belanja langsung di aplikasi. (#ComingSoon)
+### 1. 💰 Smart Tracking & Recurring
+- **Pencatatan Cepat**: Input transaksi (pemasukan/pengeluaran) dalam hitungan detik.
+- **Transaksi Berulang**: Otomatisasi pencatatan gaji, tagihan, atau langganan bulanan.
+- **Photo Receipts**: Lampirkan foto struk belanja untuk pelacakan yang lebih akurat.
 
-### 2. 📊 Visual Analytics
-- **Grafik Interaktif**: Analisis tren pengeluaran dengan Line Chart dan Pie Chart yang responsif.
-- **Financial Insights**: Dapatkan ringkasan kondisi keuangan bulanan Anda secara otomatis.
-- **Export Data**: Unduh laporan keuangan dalam format `.CSV` atau `.TXT` untuk analisis lebih lanjut.
+### 2. 📊 Visual Analytics & Budgeting
+- **Grafik Interaktif**: Pantau tren pengeluaran bulanan dan tahunan dengan chart yang indah.
+- **Smart Budgeting**: Dapatkan rekomendasi alokasi budget berdasarkan histori pengeluaran Anda.
+- **Export Reports**: Ekspor laporan keuangan Anda ke format `.CSV` atau `.TXT` kapan saja.
 
-### 3. 🎯 Goal Setting
-- **Tabungan Impian**: Set target tabungan (misal: "Dana Liburan", "Beli Gadget").
-- **Asset Management**: Kelola data asset Anda secara terpusat.
+### 3. 🎯 Goals & Savings
+- **Target Tabungan**: Buat dan pantau progress tabungan impian Anda (Liburan, Gadget, dsb).
+- **Investment Insight**: Rekomendasi alokasi dana investasi berdasarkan sisa budget bulanan.
 
-### 4. 🔒 Enterprise-Grade Security
-- **PIN Protection**: Amankan data finansial dengan PIN 6-digit (SHA-256 Encrypted).
-- **Cloud Sync**: Sinkronisasi data real-time menggunakan Firebase Firestore.
-- **Offline First**: Tetap bisa mencatat transaksi tanpa koneksi internet.
+### 4. 🔒 Keamanan & Sinkronisasi
+- **PIN Security**: Amankan data finansial Anda dengan kunci PIN 6-digit.
+- **Hybrid Storage**: Menggunakan **SQLite** untuk performa lokal yang cepat dengan dukungan sinkronisasi **Firebase Cloud**.
+- **Offline First**: Tetap pantau dan catat keuangan Anda meskipun tanpa koneksi internet.
 
 ---
 
 ## 🛠 Teknologi
 
-Project ini dibangun dengan stack teknologi modern untuk memastikan performa yang cepat dan *scalable*.
+Project ini menggunakan standar pengembangan mobile terbaru:
 
-| Kategori | Teknologi |
+| Komponen | Teknologi |
 |----------|-----------|
-| **Mobile Framework** | React Native (Expo SDK 50+) |
-| **Language** | TypeScript / JavaScript |
-| **Backend / DB** | Firebase Firestore & Auth |
-| **Local Storage** | Async Storage & SQLite |
-| **Charts** | React Native Chart Kit |
-| **Icons** | Lucide React Native |
-| **Navigation** | React Navigation 6 |
+| **Core** | React Native (Expo SDK 54) |
+| **Database** | SQLite (`expo-sqlite`) |
+| **Backend** | Firebase Firestore & Auth |
+| **Analytics** | React Native Chart Kit |
+| **Security** | PIN Encryption & Secure Store |
+| **UI/UX** | Custom Theme Context (Dynamic Light/Dark) |
 
 ---
 
 ## 🚀 Memulai (Getting Started)
 
-Ikuti langkah-langkah berikut untuk menjalankan project ini di komputer lokal Anda.
+### Prasyarat
+- Node.js LTS
+- Git
+- Aplikasi [Expo Go](https://expo.dev/client) di perangkat mobile.
 
-### Prerequisites (Prasyarat)
-Pastikan Anda sudah menginstall:
-- [Node.js](https://nodejs.org/) (LTS Version disarankan)
-- [Git](https://git-scm.com/)
-- [Expo Go](https://expo.dev/client) di HP Android/iOS Anda.
+### Instalasi & Menjalankan
 
-### Instalasi
-
-1.  **Clone Repository**
+1.  **Clone Project**
     ```bash
     git clone https://github.com/ArkanFzi/artha.git
     cd artha
@@ -82,32 +78,26 @@ Pastikan Anda sudah menginstall:
 2.  **Install Dependencies**
     ```bash
     npm install
-    # atau
-    yarn install
     ```
 
-3.  **Konfigurasi Environment** (Opsional)
-    Buat file `.env` jika diperlukan untuk API Keys Firebase (lihat `.env.example`).
-
-4.  **Jalankan Aplikasi**
+3.  **Jalankan Dev Server**
     ```bash
     npx expo start
     ```
-    Scan QR Code yang muncul di terminal menggunakan aplikasi **Expo Go**.
+    Scan QR Code menggunakan aplikasi **Expo Go** untuk melihat aplikasi langsung di HP Anda.
 
 ---
 
-## 📂 Struktur Folder
+## 📂 Struktur Proyek
 
 ```
 src/
-├── 📂 components/   # Komponen UI reusable (Button, Card, Input)
-├── 📂 screens/      # Halaman utama aplikasi (Home, Report, Profile)
-├── 📂 navigation/   # Konfigurasi routing (Stack & Tab Navigator)
-├── 📂 utils/        # Fungsi helper, konstanta, dan logic bisnis
-├── 📂 styles/       # Global styles dan tema warna
-├── 📂 config/       # Konfigurasi Firebase dan layanan pihak ketiga
-└── 📂 contexts/     # Global state management (Auth, Theme)
+├── 📂 components/   # Komponen UI Shared & Premium
+├── 📂 screens/      # Semua halaman aplikasi (Home, Budget, Goals, dsb)
+├── 📂 utils/        # Business logic, Storage, Notification & Export services
+├── 📂 contexts/     # Global state management (Theme, PIN, Auth)
+├── 📂 navigation/   # Routing Stack & Tab Navigator
+└── 📂 styles/       # Design System & Theme Tokens
 ```
 
 ---
@@ -124,12 +114,11 @@ Kontribusi selalu diterima! Caranya:
 
 ---
 
-## 📄 Lisensi
+## 📄 Lisensi & Kredit
 
-Copyright © 2026 Arkan.
-Dibuat untuk manajemen keuangan yang lebih baik.
+Copyright © 2026 **Arkan**.
+Artha dikembangkan untuk mempermudah siapa saja dalam mengelola masa depan finansial mereka.
 
----
 <div align="center">
-  <sub>Developed by Arkan</sub>
+  <sub>Developed with ❤️ for better financial life.</sub>
 </div>

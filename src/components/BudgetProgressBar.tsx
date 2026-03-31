@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { calculateBudgetUsage, getBudgetStatusColor, formatCurrency } from '../utils/calculations';
 import { Category } from '../types';
 
@@ -11,21 +12,22 @@ interface BudgetProgressBarProps {
 }
 
 const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({ category, spent, budget }) => {
+  const { theme } = useTheme();
   const percentage = calculateBudgetUsage(spent, budget);
   const statusColor = getBudgetStatusColor(percentage);
   const remaining = Math.max(budget - spent, 0);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.surface }]}>
       <View style={styles.header}>
         <View style={styles.categoryInfo}>
           <Text style={styles.icon}>{category.icon}</Text>
-          <Text style={styles.categoryName}>{category.name}</Text>
+          <Text style={[styles.categoryName, { color: theme.text }]}>{category.name}</Text>
         </View>
-        <Text style={styles.amount}>{formatCurrency(spent)} / {formatCurrency(budget)}</Text>
+        <Text style={[styles.amount, { color: theme.textSecondary }]}>{formatCurrency(spent)} / {formatCurrency(budget)}</Text>
       </View>
       
-      <View style={styles.progressBarContainer}>
+      <View style={[styles.progressBarContainer, { backgroundColor: theme.border }]}>
         <View 
           style={[
             styles.progressBar, 
@@ -41,7 +43,7 @@ const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({ category, spent, 
         <Text style={[styles.percentage, { color: statusColor }]}>
           {percentage.toFixed(0)}%
         </Text>
-        <Text style={styles.remaining}>
+        <Text style={[styles.remaining, { color: theme.textSecondary }]}>
           Sisa: {formatCurrency(remaining)}
         </Text>
       </View>
@@ -51,7 +53,6 @@ const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({ category, spent, 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     marginBottom: SPACING.md,
@@ -74,17 +75,14 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: FONT_SIZES.md,
     fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text as string,
     flex: 1,
   },
   amount: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary as string,
     fontWeight: FONT_WEIGHTS.medium,
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: COLORS.border as string,
     borderRadius: BORDER_RADIUS.sm,
     overflow: 'hidden',
     marginBottom: SPACING.sm,
@@ -104,7 +102,6 @@ const styles = StyleSheet.create({
   },
   remaining: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary as string,
   },
 });
 

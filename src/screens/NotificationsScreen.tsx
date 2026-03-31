@@ -280,10 +280,12 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
         </View>
 
         <View style={styles.cardContent}>
-          <Text style={[styles.cardTitle, { color: theme.text }]}>
-            {notification.title}
+          <View style={styles.cardTitleRow}>
+            <Text style={[styles.cardTitle, { color: theme.text }]} numberOfLines={1}>
+              {notification.title}
+            </Text>
             {!notification.isRead && <View style={styles.unreadDot} />}
-          </Text>
+          </View>
           <Text style={[styles.cardMessage, { color: theme.textSecondary }]} numberOfLines={2}>
             {notification.message}
           </Text>
@@ -407,12 +409,15 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
   },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    marginBottom: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flex: 1,
   },
   unreadDot: {
     width: 6,

@@ -7,8 +7,12 @@ import {
   TextInput, 
   TouchableOpacity,
   Alert,
-  Dimensions
+  Dimensions,
+  Modal,
+  FlatList,
+  Platform
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../styles/theme';
 import CategoryPicker from '../components/CategoryPicker';
 import ImagePickerComponent from '../components/ImagePickerComponent';
@@ -34,7 +38,12 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation,
   const [amount, setAmount] = useState(editTransaction?.amount?.toString() || '');
   const [description, setDescription] = useState(editTransaction?.description || '');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [date, setDate] = useState(editTransaction?.date || new Date().toISOString().slice(0, 10));
+  const initialDateString = editTransaction?.date || new Date().toISOString().slice(0, 10);
+  const [dateObj, setDateObj] = useState<Date>(() => {
+    const d = new Date(initialDateString + 'T00:00:00');
+    return isNaN(d.getTime()) ? new Date() : d;
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [notes, setNotes] = useState(editTransaction?.note || '');
@@ -43,6 +52,21 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation,
   const initialCurrency = CURRENCIES.find(c => c.code === editTransaction?.currency) || CURRENCIES[0];
   const [currency, setCurrency] = useState<Currency>(initialCurrency);
   const [exchangeRate, setExchangeRate] = useState(editTransaction?.exchangeRate?.toString() || '1');
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+
+  const formatDateDisplay = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day   = String(d.getDate()).padStart(2, '0');
+    return `${day}/${month}/${year}`;
+  };
+
+  const dateISOString = () => {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day   = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
     if (currency.code !== 'IDR' && !editTransaction) {
@@ -91,7 +115,7 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation,
         amount: parseFloat(amount),
         description: description.trim(),
         categoryId: type === 'expense' ? selectedCategory?.id || null : null,
-        date,
+        date: dateISOString(),
         note: notes.trim(),
         photoUri: photoUri || undefined,
         currency: currency.code,
@@ -163,7 +187,7 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation,
           <View style={styles.amountInputContainer}>
             <TouchableOpacity 
               style={[styles.currencySelect, { backgroundColor: theme.surfaceLight }]}
-              onPress={() => { /* Potential to show a picker but keeping the pills for now */ }}
+              onPress={() => setShowCurrencyModal(true)}
             >
               <Text style={[styles.currencyText, { color: theme.primary }]}>{currency.code}</Text>
             </TouchableOpacity>
@@ -236,16 +260,24 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation,
             </>
           )}
 
-          <View style={styles.inputRow}>
+          <TouchableOpacity style={styles.inputRow} onPress={() => setShowDatePicker(true)}>
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Tanggal</Text>
-            <TextInput
-              style={[styles.inputField, { color: theme.text }]}
-              value={date}
-              onChangeText={setDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={theme.textMuted}
+            <Text style={[styles.inputField, { color: theme.text }]}>{formatDateDisplay(dateObj)}</Text>
+            <Text style={[styles.chevron, { color: theme.textMuted }]}>›</Text>
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={dateObj}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(_event, selectedDate) => {
+                setShowDatePicker(Platform.OS === 'ios');
+                if (selectedDate) setDateObj(selectedDate);
+              }}
+              maximumDate={new Date()}
             />
-          </View>
+          )}
         </View>
 
         {/* Notes Section */}
@@ -290,6 +322,51 @@ const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ navigation,
         onSelect={setSelectedCategory}
         onClose={() => setShowCategoryPicker(false)}
       />
+
+      {/* Currency Picker Modal */}
+      <Modal
+        visible={showCurrencyModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCurrencyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: isDark ? theme.surface : '#FFF' }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Pilih Mata Uang</Text>
+              <TouchableOpacity onPress={() => setShowCurrencyModal(false)}>
+                <Text style={[styles.modalClose, { color: theme.textSecondary }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={CURRENCIES}
+              keyExtractor={item => item.code}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.currencyItem,
+                    currency.code === item.code && { backgroundColor: isDark ? 'rgba(0,191,166,0.15)' : 'rgba(0,191,166,0.1)' },
+                  ]}
+                  onPress={() => {
+                    setCurrency(item);
+                    setShowCurrencyModal(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.currencyItemCode, { color: theme.text }]}>{item.code} — {item.symbol}</Text>
+                    <Text style={[styles.currencyItemName, { color: theme.textSecondary }]}>{item.name}</Text>
+                  </View>
+                  {currency.code === item.code && (
+                    <Text style={{ color: COLORS.primary, fontSize: 20 }}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -434,6 +511,51 @@ const styles = StyleSheet.create({
     color: COLORS.navy,
     fontSize: 16,
     fontWeight: '900',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '60%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  modalClose: {
+    fontSize: 26,
+    fontWeight: '300',
+  },
+  currencyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginVertical: 4,
+  },
+  currencyItemCode: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  currencyItemName: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
   },
 });
 

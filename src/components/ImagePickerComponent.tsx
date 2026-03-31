@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ImagePickerComponentProps {
   imageUri?: string | null;
@@ -10,6 +11,7 @@ interface ImagePickerComponentProps {
 }
 
 const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ imageUri, onImageSelected, onImageRemoved }) => {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
 
   const requestPermission = async () => {
@@ -108,7 +110,7 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ imageUri, o
   if (imageUri) {
     return (
       <View style={styles.imageContainer}>
-        <Text style={styles.label}>📸 Foto Struk</Text>
+        <Text style={[styles.label, { color: theme.text }]}>📸 Foto Struk</Text>
         <View style={styles.imageWrapper}>
           <Image source={{ uri: imageUri }} style={styles.image} />
           <TouchableOpacity 
@@ -124,14 +126,14 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ imageUri, o
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>📸 Foto Struk (Opsional)</Text>
+      <Text style={[styles.label, { color: theme.text }]}>📸 Foto Struk (Opsional)</Text>
       <TouchableOpacity 
-        style={styles.addButton}
+        style={[styles.addButton, { backgroundColor: theme.background, borderColor: theme.primary }]}
         onPress={showImageOptions}
         disabled={loading}
       >
         <Text style={styles.addButtonIcon}>📷</Text>
-        <Text style={styles.addButtonText}>
+        <Text style={[styles.addButtonText, { color: theme.primary }]}>
           {loading ? 'Loading...' : 'Tambah Foto Struk'}
         </Text>
       </TouchableOpacity>
@@ -149,16 +151,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: FONT_SIZES.sm as any,
     fontWeight: FONT_WEIGHTS.medium as any,
-    color: COLORS.text as string,
     marginBottom: SPACING.sm,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.background as string,
     borderWidth: 2,
-    borderColor: COLORS.primary as string,
     borderStyle: 'dashed',
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.lg,
@@ -170,7 +169,6 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: FONT_SIZES.md as any,
     fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.primary as string,
   },
   imageWrapper: {
     position: 'relative',

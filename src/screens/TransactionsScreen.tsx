@@ -63,7 +63,7 @@ const TransactionsScreen: React.FC<TransactionsScreenProps> = ({ navigation }) =
       );
       setFilteredTransactions(filtered);
     }
-  }, [searchQuery, transactions]);
+  }, [searchQuery, transactions, categories]);
 
   const onRefresh = async () => {
     setRefreshing(true);

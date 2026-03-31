@@ -11,6 +11,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../styles/theme';
 import { globalStyles } from '../styles/globalStyles';
+import { useTheme } from '../contexts/ThemeContext';
 import { saveGoal } from '../utils/storage';
 import { Goal } from '../types';
 import { NavigationProp, RouteProp } from '@react-navigation/native';
@@ -25,6 +26,7 @@ const ICONS = ['🎯', '🏠', '✈️', '💻', '📱', '💊', '🎓', '🛍�
 const COLORS_LIST = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#96CEB4', '#FFEEAD'];
 
 const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
+  const { theme, isDark } = useTheme();
   const editingGoal = route.params?.goal;
 
   const [name, setName] = useState(editingGoal?.name || '');
@@ -60,24 +62,24 @@ const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Nama Target</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Nama Target</Text>
         <TextInput
-          style={[styles.input, { color: COLORS.text as string, borderColor: COLORS.border as string }]}
+          style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]}
           placeholder="Contoh: Beli Laptop Baru"
-          placeholderTextColor={COLORS.textSecondary as string}
+          placeholderTextColor={theme.textMuted as string}
           value={name}
           onChangeText={setName}
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Target Dana (Rp)</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Target Dana (Rp)</Text>
         <TextInput
-          style={[styles.input, { color: COLORS.text as string, borderColor: COLORS.border as string }]}
+          style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]}
           placeholder="0"
-          placeholderTextColor={COLORS.textSecondary as string}
+          placeholderTextColor={theme.textMuted as string}
           value={amount}
           onChangeText={setAmount}
           keyboardType="numeric"
@@ -85,12 +87,12 @@ const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Target Waktu</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Target Waktu</Text>
         <TouchableOpacity 
-          style={styles.dateButton} 
+          style={[styles.dateButton, { backgroundColor: theme.surface, borderColor: theme.border }]} 
           onPress={() => setShowDatePicker(true)}
         >
-          <Text style={styles.dateText}>{deadline.toLocaleDateString('id-ID')}</Text>
+          <Text style={[styles.dateText, { color: theme.text }]}>{deadline.toLocaleDateString('id-ID')}</Text>
         </TouchableOpacity>
         {showDatePicker && (
           <DateTimePicker
@@ -106,12 +108,16 @@ const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Pilih Ikon</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Pilih Ikon</Text>
         <View style={styles.grid}>
           {ICONS.map((icon) => (
             <TouchableOpacity
               key={icon}
-              style={[styles.optionItem, selectedIcon === icon && styles.selectedOption]}
+              style={[
+                styles.optionItem,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+                selectedIcon === icon && { borderColor: theme.primary as string, backgroundColor: isDark ? 'rgba(0,191,166,0.15)' : '#E3F2FD' },
+              ]}
               onPress={() => setSelectedIcon(icon)}
             >
               <Text style={styles.optionText}>{icon}</Text>
@@ -121,7 +127,7 @@ const AddGoalScreen: React.FC<AddGoalScreenProps> = ({ navigation, route }) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Pilih Warna</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Pilih Warna</Text>
         <View style={styles.grid}>
           {COLORS_LIST.map((color) => (
             <TouchableOpacity

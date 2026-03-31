@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
 import { globalStyles } from '../styles/globalStyles';
+import { useTheme } from '../contexts/ThemeContext';
 import CategoryPicker from '../components/CategoryPicker';
 import { saveRecurringTransaction } from '../utils/recurringService';
 import { getCategories } from '../utils/storage';
@@ -15,15 +17,31 @@ interface AddRecurringScreenProps {
 }
 
 const AddRecurringScreen: React.FC<AddRecurringScreenProps> = ({ navigation }) => {
+  const { theme, isDark } = useTheme();
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [frequency, setFrequency] = useState<RecurringFrequency>('monthly');
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [startDateObj, setStartDateObj] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [notes, setNotes] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+
+  const formatDateDisplay = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${day}/${month}/${year}`;
+  };
+
+  const dateISOString = () => {
+    const year = startDateObj.getFullYear();
+    const month = String(startDateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(startDateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   useEffect(() => {
     loadCategories();
@@ -60,7 +78,7 @@ const AddRecurringScreen: React.FC<AddRecurringScreenProps> = ({ navigation }) =
         description: description.trim(),
         categoryId: type === 'expense' ? selectedCategory?.id || null : null,
         frequency,
-        startDate,
+        startDate: dateISOString(),
         endDate: null,
         notes: notes.trim(),
       };
@@ -85,22 +103,18 @@ const AddRecurringScreen: React.FC<AddRecurringScreenProps> = ({ navigation }) =
   ];
 
   return (
-    <View style={globalStyles.container}>
+    <View style={[globalStyles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Type Toggle */}
         <View style={styles.typeToggle}>
           <TouchableOpacity
             style={[
               styles.typeButton,
-              type === 'income' && styles.typeButtonActive,
-              { backgroundColor: type === 'income' ? (COLORS.success as string) : (COLORS.border as string) }
+              { backgroundColor: type === 'income' ? (COLORS.success as string) : theme.surfaceLight }
             ]}
             onPress={() => setType('income')}
           >
-            <Text style={[
-              styles.typeButtonText,
-              type === 'income' && styles.typeButtonTextActive
-            ]}>
+            <Text style={[styles.typeButtonText, { color: type === 'income' ? '#FFF' : theme.textSecondary }]}>
               💰 Pemasukan
             </Text>
           </TouchableOpacity>
@@ -108,15 +122,11 @@ const AddRecurringScreen: React.FC<AddRecurringScreenProps> = ({ navigation }) =
           <TouchableOpacity
             style={[
               styles.typeButton,
-              type === 'expense' && styles.typeButtonActive,
-              { backgroundColor: type === 'expense' ? (COLORS.danger as string) : (COLORS.border as string) }
+              { backgroundColor: type === 'expense' ? (COLORS.danger as string) : theme.surfaceLight }
             ]}
             onPress={() => setType('expense')}
           >
-            <Text style={[
-              styles.typeButtonText,
-              type === 'expense' && styles.typeButtonTextActive
-            ]}>
+            <Text style={[styles.typeButtonText, { color: type === 'expense' ? '#FFF' : theme.textSecondary }]}>
               💸 Pengeluaran
             </Text>
           </TouchableOpacity>
@@ -124,20 +134,20 @@ const AddRecurringScreen: React.FC<AddRecurringScreenProps> = ({ navigation }) =
 
         {/* Amount Input */}
         <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Jumlah</Text>
-          <View style={styles.amountInputContainer}>
-            <Text style={styles.currencyPrefix}>Rp</Text>
+          <Text style={[globalStyles.label, { color: theme.text }]}>Jumlah</Text>
+          <View style={[styles.amountInputContainer, { backgroundColor: theme.surface, borderColor: theme.primary }]}>
+            <Text style={[styles.currencyPrefix, { color: theme.text }]}>Rp</Text>
             <TextInput
-              style={styles.amountInput}
+              style={[styles.amountInput, { color: theme.text }]}
               placeholder="0"
               keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
-              placeholderTextColor={COLORS.textSecondary as string}
+              placeholderTextColor={theme.textMuted as string}
             />
           </View>
           {amount && parseFloat(amount) > 0 && (
-            <Text style={styles.amountPreview}>
+            <Text style={[styles.amountPreview, { color: theme.textSecondary }]}>
               {formatCurrency(parseFloat(amount))}
             </Text>
           )}
@@ -145,13 +155,13 @@ const AddRecurringScreen: React.FC<AddRecurringScreenProps> = ({ navigation }) =
 
         {/* Description Input */}
         <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Deskripsi</Text>
+          <Text style={[globalStyles.label, { color: theme.text }]}>Deskripsi</Text>
           <TextInput
-            style={[globalStyles.input, { color: COLORS.text as string, borderColor: COLORS.border as string }]}
+            style={[globalStyles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]}
             placeholder="Contoh: Gaji Bulanan, Tagihan Listrik"
             value={description}
             onChangeText={setDescription}
-            placeholderTextColor={COLORS.textSecondary as string}
+            placeholderTextColor={theme.textMuted as string}
           />
         </View>
 
@@ -211,28 +221,38 @@ const AddRecurringScreen: React.FC<AddRecurringScreenProps> = ({ navigation }) =
 
         {/* Start Date */}
         <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Mulai Tanggal</Text>
-          <TextInput
-            style={[globalStyles.input, { color: COLORS.text as string, borderColor: COLORS.border as string }]}
-            value={startDate}
-            onChangeText={setStartDate}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={COLORS.textSecondary as string}
-          />
+          <Text style={[globalStyles.label, { color: theme.text }]}>Mulai Tanggal</Text>
+          <TouchableOpacity
+            style={[globalStyles.input, { backgroundColor: theme.surface, borderColor: theme.border, justifyContent: 'center' }]}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={{ color: theme.text, fontSize: 16 }}>{formatDateDisplay(startDateObj)}</Text>
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={startDateObj}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(_event, selectedDate) => {
+                setShowDatePicker(Platform.OS === 'ios');
+                if (selectedDate) setStartDateObj(selectedDate);
+              }}
+            />
+          )}
         </View>
 
         {/* Notes Input */}
         <View style={styles.inputGroup}>
-          <Text style={globalStyles.label}>Catatan (Opsional)</Text>
+          <Text style={[globalStyles.label, { color: theme.text }]}>Catatan (Opsional)</Text>
           <TextInput
-            style={[globalStyles.input, styles.notesInput, { color: COLORS.text as string, borderColor: COLORS.border as string }]}
+            style={[globalStyles.input, styles.notesInput, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]}
             placeholder="Tambahkan catatan..."
             value={notes}
             onChangeText={setNotes}
             multiline
             numberOfLines={3}
             textAlignVertical="top"
-            placeholderTextColor={COLORS.textSecondary as string}
+            placeholderTextColor={theme.textMuted as string}
           />
         </View>
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { Category } from '../types';
 
 interface CategoryPickerProps {
@@ -12,6 +13,8 @@ interface CategoryPickerProps {
 }
 
 const CategoryPicker: React.FC<CategoryPickerProps> = ({ visible, categories, selectedCategoryId, onSelect, onClose }) => {
+  const { theme } = useTheme();
+  
   return (
     <Modal
       visible={visible}
@@ -20,11 +23,11 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ visible, categories, se
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Pilih Kategori</Text>
+            <Text style={[styles.title, { color: theme.text }]}>Pilih Kategori</Text>
             <TouchableOpacity onPress={onClose}>
-              <Text style={styles.closeButton}>✕</Text>
+              <Text style={[styles.closeButton, { color: theme.textSecondary }]}>✕</Text>
             </TouchableOpacity>
           </View>
           
@@ -40,7 +43,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ visible, categories, se
                   style={[
                     styles.categoryItem,
                     { backgroundColor: item.color },
-                    isSelected && styles.selectedCategory,
+                    isSelected && [styles.selectedCategory, { borderColor: theme.text }],
                   ]}
                   onPress={() => {
                     onSelect(item);
@@ -49,7 +52,7 @@ const CategoryPicker: React.FC<CategoryPickerProps> = ({ visible, categories, se
                   activeOpacity={0.7}
                 >
                   <Text style={styles.categoryIcon}>{item.icon}</Text>
-                  <Text style={styles.categoryName} numberOfLines={1}>
+                  <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
                     {item.name}
                   </Text>
                   {isSelected && (
@@ -74,7 +77,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: COLORS.surface,
     borderTopLeftRadius: BORDER_RADIUS.xl,
     borderTopRightRadius: BORDER_RADIUS.xl,
     paddingTop: SPACING.lg,
@@ -91,11 +93,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZES.xl as any,
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text as string,
   },
   closeButton: {
     fontSize: 28,
-    color: COLORS.textSecondary as string,
     fontWeight: FONT_WEIGHTS.bold as any,
   },
   grid: {
@@ -112,7 +112,6 @@ const styles = StyleSheet.create({
   },
   selectedCategory: {
     borderWidth: 3,
-    borderColor: COLORS.text as string,
   },
   categoryIcon: {
     fontSize: 32,
@@ -121,7 +120,6 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: FONT_SIZES.xs as any,
     fontWeight: FONT_WEIGHTS.medium as any,
-    color: COLORS.text as string,
     textAlign: 'center',
   },
   checkmark: {

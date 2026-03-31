@@ -20,6 +20,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -124,9 +126,9 @@ export const scheduleDailyReminder = async (): Promise<void> => {
         data: { type: 'daily_reminder' },
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: hours,
         minute: minutes,
-        repeats: true,
       },
     });
   } catch (error) {
@@ -199,10 +201,8 @@ export const scheduleMonthlyReview = async (): Promise<void> => {
         hour: 10,
         minute: 0,
         repeats: true,
-      } as Notifications.DailyTriggerInput, // DailyTriggerInput can handle day of month in some versions, but actually MonthlyTrigger is better if available
+      } as any as Notifications.CalendarTriggerInput,
     });
-    // Note: Expo Notifications trigger for "1st of month" is a bit tricky. 
-    // Usually it's CalendarTriggerInput.
   } catch (error) {
     console.error('Error scheduling monthly review:', error);
   }

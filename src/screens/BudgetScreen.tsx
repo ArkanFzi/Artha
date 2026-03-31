@@ -15,6 +15,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
 import { globalStyles } from '../styles/globalStyles';
+import { useTheme } from '../contexts/ThemeContext';
 import BudgetProgressBar from '../components/BudgetProgressBar';
 import InvestmentCard from '../components/InvestmentCard';
 import { getTransactions, getCategories, getBudget, saveBudget } from '../utils/storage';
@@ -36,6 +37,7 @@ interface BudgetScreenProps {
 }
 
 const BudgetScreen: React.FC<BudgetScreenProps> = ({ navigation }) => {
+  const { theme, isDark } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [budget, setBudget] = useState<Budget | null>(null);
   const [totalIncome, setTotalIncome] = useState<string>('');
@@ -154,7 +156,7 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ navigation }) => {
     : null;
 
   return (
-    <View style={globalStyles.container}>
+    <View style={[globalStyles.container, { backgroundColor: theme.background }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -162,12 +164,12 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ navigation }) => {
         }
       >
         {/* Total Income Input */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>💰 Total Pemasukan Bulan Ini</Text>
-          <View style={styles.incomeInputContainer}>
-            <Text style={styles.currencyPrefix}>Rp</Text>
+        <View style={[styles.card, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>💰 Total Pemasukan Bulan Ini</Text>
+          <View style={[styles.incomeInputContainer, { backgroundColor: theme.background, borderColor: theme.primary }]}>
+            <Text style={[styles.currencyPrefix, { color: theme.text }]}>Rp</Text>
             <TextInput
-              style={styles.incomeInput}
+              style={[styles.incomeInput, { color: theme.text }]}
               placeholder="0"
               keyboardType="numeric"
               value={totalIncome}
@@ -175,11 +177,11 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ navigation }) => {
                 setTotalIncome(value);
                 setIsEditing(true);
               }}
-              placeholderTextColor={COLORS.textSecondary as string}
+              placeholderTextColor={theme.textMuted as string}
             />
           </View>
           {totalIncome && parseFloat(totalIncome) > 0 && (
-            <Text style={styles.incomePreview}>
+            <Text style={[styles.incomePreview, { color: theme.textSecondary }]}>
               {formatCurrency(parseFloat(totalIncome))}
             </Text>
           )}
@@ -187,18 +189,18 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ navigation }) => {
 
         {/* Budget Summary */}
         {totalIncome && parseFloat(totalIncome) > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>📊 Ringkasan Budget</Text>
+          <View style={[styles.card, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>📊 Ringkasan Budget</Text>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Pemasukan:</Text>
-              <Text style={styles.summaryValue}>{formatCurrency(parseFloat(totalIncome))}</Text>
+              <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>Total Pemasukan:</Text>
+              <Text style={[styles.summaryValue, { color: theme.text }]}>{formatCurrency(parseFloat(totalIncome))}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Dialokasikan:</Text>
-              <Text style={styles.summaryValue}>{formatCurrency(totalBudgetAllocated)}</Text>
+              <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>Total Dialokasikan:</Text>
+              <Text style={[styles.summaryValue, { color: theme.text }]}>{formatCurrency(totalBudgetAllocated)}</Text>
             </View>
-            <View style={[styles.summaryRow, styles.summaryRowTotal]}>
-              <Text style={styles.summaryLabelBold}>Sisa Budget:</Text>
+            <View style={[styles.summaryRow, styles.summaryRowTotal, { borderTopColor: theme.border }]}>
+              <Text style={[styles.summaryLabelBold, { color: theme.text }]}>Sisa Budget:</Text>
               <Text style={[
                 styles.summaryValueBold,
                 { color: remainingBudgetValue >= 0 ? COLORS.success as string : COLORS.danger as string }
@@ -247,7 +249,7 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ navigation }) => {
             const spentAmount = categorySpending[category.id] || 0;
 
             return (
-              <View key={category.id} style={styles.categoryBudgetCard}>
+              <View key={category.id} style={[styles.categoryBudgetCard, { backgroundColor: theme.surface }]}>
                 {budgetAmount > 0 ? (
                   <BudgetProgressBar
                     category={category}
@@ -258,17 +260,17 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ navigation }) => {
                   <View style={styles.categoryHeader}>
                     <View style={styles.categoryInfo}>
                       <Text style={styles.categoryIcon}>{category.icon}</Text>
-                      <Text style={styles.categoryName}>{category.name}</Text>
+                      <Text style={[styles.categoryName, { color: theme.text }]}>{category.name}</Text>
                     </View>
                   </View>
                 )}
                 
                 <View style={styles.budgetInputContainer}>
-                  <Text style={styles.budgetInputLabel}>Budget:</Text>
-                  <View style={styles.budgetInputWrapper}>
-                    <Text style={styles.budgetCurrencyPrefix}>Rp</Text>
+                  <Text style={[styles.budgetInputLabel, { color: theme.textSecondary }]}>Budget:</Text>
+                  <View style={[styles.budgetInputWrapper, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                    <Text style={[styles.budgetCurrencyPrefix, { color: theme.text }]}>Rp</Text>
                     <TextInput
-                      style={styles.budgetInput}
+                      style={[styles.budgetInput, { color: theme.text }]}
                       placeholder="0"
                       keyboardType="numeric"
                       value={categoryBudgets[category.id]?.toString() || ''}
@@ -276,7 +278,7 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ navigation }) => {
                         updateCategoryBudget(category.id, value);
                         setIsEditing(true);
                       }}
-                      placeholderTextColor={COLORS.textSecondary as string}
+                      placeholderTextColor={theme.textMuted as string}
                     />
                   </View>
                 </View>

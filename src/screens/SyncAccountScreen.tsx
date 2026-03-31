@@ -130,8 +130,11 @@ const SyncAccountScreen: React.FC<SyncAccountScreenProps> = ({ navigation }) => 
             try {
               const result = await restoreData();
               if (result.success) {
-                Alert.alert('Berhasil', 'Data berhasil dipulihkan. Aplikasi akan dimuat ulang.');
-                // In real app, we might need to trigger a global state refresh or reload
+                Alert.alert(
+                  'Berhasil',
+                  'Data berhasil dipulihkan dari Cloud.',
+                  [{ text: 'OK', onPress: () => navigation.navigate('Home' as any) }]
+                );
               } else {
                 Alert.alert('Gagal', result.error || 'Tidak ada data backup ditemukan');
               }

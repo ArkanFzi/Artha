@@ -12,6 +12,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
 import { globalStyles } from '../styles/globalStyles';
+import { useTheme } from '../contexts/ThemeContext';
 import { getCategories, saveCategory, deleteCategory } from '../utils/storage';
 import { NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -22,6 +23,7 @@ interface CategoryScreenProps {
 }
 
 const CategoryScreen: React.FC<CategoryScreenProps> = ({ navigation }) => {
+  const { theme } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -110,7 +112,7 @@ const CategoryScreen: React.FC<CategoryScreenProps> = ({ navigation }) => {
   ];
 
   return (
-    <View style={globalStyles.container}>
+    <View style={[globalStyles.container, { backgroundColor: theme.background }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -129,28 +131,28 @@ const CategoryScreen: React.FC<CategoryScreenProps> = ({ navigation }) => {
 
         {/* Add Category Form */}
         {showAddForm && (
-          <View style={styles.addForm}>
-            <Text style={styles.formTitle}>Kategori Baru</Text>
+          <View style={[styles.addForm, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.formTitle, { color: theme.text }]}>Kategori Baru</Text>
             
             <View style={styles.inputGroup}>
-              <Text style={globalStyles.label}>Nama Kategori</Text>
+              <Text style={[globalStyles.label, { color: theme.text }]}>Nama Kategori</Text>
               <TextInput
-                style={globalStyles.input}
+                style={[globalStyles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
                 placeholder="Contoh: Olahraga"
                 value={newCategoryName}
                 onChangeText={setNewCategoryName}
-                placeholderTextColor={COLORS.textSecondary as string}
+                placeholderTextColor={theme.textMuted as string}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={globalStyles.label}>Icon (Emoji)</Text>
+              <Text style={[globalStyles.label, { color: theme.text }]}>Icon (Emoji)</Text>
               <TextInput
-                style={globalStyles.input}
+                style={[globalStyles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
                 placeholder="Contoh: ⚽"
                 value={newCategoryIcon}
                 onChangeText={setNewCategoryIcon}
-                placeholderTextColor={COLORS.textSecondary as string}
+                placeholderTextColor={theme.textMuted as string}
               />
             </View>
 
@@ -198,15 +200,15 @@ const CategoryScreen: React.FC<CategoryScreenProps> = ({ navigation }) => {
         )}
 
         {/* Categories List */}
-        <Text style={styles.sectionTitle}>Semua Kategori</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Semua Kategori</Text>
         {categories.map((category) => (
-          <View key={category.id} style={styles.categoryCard}>
+          <View key={category.id} style={[styles.categoryCard, { backgroundColor: theme.surface }]}>
             <View style={[styles.categoryIconContainer, { backgroundColor: category.color }]}>
               <Text style={styles.categoryIcon}>{category.icon}</Text>
             </View>
             <View style={styles.categoryInfo}>
-              <Text style={styles.categoryName}>{category.name}</Text>
-              <Text style={styles.categoryType}>
+              <Text style={[styles.categoryName, { color: theme.text }]}>{category.name}</Text>
+              <Text style={[styles.categoryType, { color: theme.textSecondary }]}>
                 {category.isDefault ? '📌 Kategori Default' : '✨ Kategori Custom'}
               </Text>
             </View>

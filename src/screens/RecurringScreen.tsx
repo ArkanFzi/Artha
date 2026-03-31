@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshCon
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '../styles/theme';
 import { globalStyles } from '../styles/globalStyles';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   getRecurringTransactions,
   deleteRecurringTransaction,
@@ -20,6 +21,7 @@ interface RecurringScreenProps {
 }
 
 const RecurringScreen: React.FC<RecurringScreenProps> = ({ navigation }) => {
+  const { theme } = useTheme();
   const [recurrings, setRecurrings] = useState<RecurringTransaction[]>([]);
   const [upcoming, setUpcoming] = useState<(RecurringTransaction & { nextDueDate: string })[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -103,7 +105,7 @@ const RecurringScreen: React.FC<RecurringScreenProps> = ({ navigation }) => {
     const isIncome = recurring.type === 'income';
 
     return (
-      <View key={recurring.id} style={styles.card}>
+      <View key={recurring.id} style={[styles.card, { backgroundColor: theme.surface }]}>
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
             {category && (
@@ -112,8 +114,8 @@ const RecurringScreen: React.FC<RecurringScreenProps> = ({ navigation }) => {
               </View>
             )}
             <View style={styles.cardInfo}>
-              <Text style={styles.cardTitle}>{recurring.description}</Text>
-              <Text style={styles.cardSubtitle}>
+              <Text style={[styles.cardTitle, { color: theme.text }]}>{recurring.description}</Text>
+              <Text style={[styles.cardSubtitle, { color: theme.textSecondary }]}>
                 {getFrequencyText(recurring.frequency)} • {category?.name || 'Pemasukan'}
               </Text>
             </View>
@@ -123,22 +125,22 @@ const RecurringScreen: React.FC<RecurringScreenProps> = ({ navigation }) => {
           </Text>
         </View>
 
-        <View style={styles.cardFooter}>
-          <View style={styles.statusBadge}>
-            <Text style={[styles.statusText, { color: recurring.isActive ? (COLORS.success as string) : (COLORS.textSecondary as string) }]}>
+        <View style={[styles.cardFooter, { borderTopColor: theme.border }]}>
+          <View style={[styles.statusBadge, { backgroundColor: theme.background }]}>
+            <Text style={[styles.statusText, { color: recurring.isActive ? (COLORS.success as string) : (theme.textSecondary as string) }]}>
               {recurring.isActive ? '✓ Aktif' : '⏸ Nonaktif'}
             </Text>
           </View>
 
           <View style={styles.cardActions}>
             <TouchableOpacity
-              style={[styles.actionButton, styles.toggleButton]}
+              style={[styles.actionButton, styles.toggleButton, { backgroundColor: theme.background }]}
               onPress={() => handleToggle(recurring.id)}
             >
               <Text style={styles.actionButtonText}>{recurring.isActive ? '⏸' : '▶'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionButton, styles.deleteButton]}
+              style={[styles.actionButton, styles.deleteButton, { backgroundColor: theme.background }]}
               onPress={() => handleDelete(recurring.id)}
             >
               <Text style={styles.actionButtonText}>🗑️</Text>
@@ -150,7 +152,7 @@ const RecurringScreen: React.FC<RecurringScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View style={globalStyles.container}>
+    <View style={[globalStyles.container, { backgroundColor: theme.background }]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -158,11 +160,11 @@ const RecurringScreen: React.FC<RecurringScreenProps> = ({ navigation }) => {
         {/* Upcoming Section */}
         {upcoming.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📅 Akan Datang (7 Hari)</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>📅 Akan Datang (7 Hari)</Text>
             {upcoming.map(item => (
-              <View key={item.id} style={styles.upcomingCard}>
-                <Text style={styles.upcomingTitle}>{item.description}</Text>
-                <Text style={styles.upcomingDate}>
+              <View key={item.id} style={[styles.upcomingCard, { backgroundColor: theme.surfaceLight }]}>
+                <Text style={[styles.upcomingTitle, { color: theme.primary }]}>{item.description}</Text>
+                <Text style={[styles.upcomingDate, { color: theme.textSecondary }]}>
                   {formatDate(item.nextDueDate)} • {formatCurrency(item.amount)}
                 </Text>
               </View>
@@ -173,7 +175,7 @@ const RecurringScreen: React.FC<RecurringScreenProps> = ({ navigation }) => {
         {/* All Recurring Transactions */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🔄 Transaksi Berulang</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>🔄 Transaksi Berulang</Text>
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => navigation.navigate('AddRecurring')}
@@ -185,8 +187,8 @@ const RecurringScreen: React.FC<RecurringScreenProps> = ({ navigation }) => {
           {recurrings.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🔄</Text>
-              <Text style={styles.emptyText}>Belum Ada Transaksi Berulang</Text>
-              <Text style={styles.emptySubtext}>
+              <Text style={[styles.emptyText, { color: theme.text }]}>Belum Ada Transaksi Berulang</Text>
+              <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
                 Buat transaksi berulang untuk otomatis mencatat gaji, tagihan, atau langganan
               </Text>
               <TouchableOpacity

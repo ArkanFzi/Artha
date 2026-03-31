@@ -179,7 +179,7 @@ const migrateFromAsyncStorage = async () => {
             t.amount, 
             t.categoryId, 
             t.type, 
-            t.description, 
+            t.description || null, 
             t.note || '', 
             t.date, 
             t.createdAt, 
@@ -251,8 +251,33 @@ const migrateFromAsyncStorage = async () => {
 };
 
 // Transaction operations
-export const saveTransaction = async (transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction> => {
+export const saveTransaction = async (transaction: Partial<Transaction> & Omit<Transaction, 'id' | 'createdAt'>): Promise<Transaction> => {
   const db = await getDb();
+
+  // If id is provided (edit mode), do UPDATE
+  if ((transaction as any).id) {
+    const existingId = (transaction as any).id;
+    await db.runAsync(
+      `UPDATE transactions SET
+        amount = ?, categoryId = ?, type = ?, description = ?, note = ?,
+        date = ?, isRecurring = ?, recurringId = ?
+       WHERE id = ?`,
+      [
+        transaction.amount,
+        transaction.categoryId,
+        transaction.type,
+        transaction.description,
+        transaction.note || '',
+        transaction.date,
+        transaction.isRecurring ? 1 : 0,
+        transaction.recurringId || null,
+        existingId,
+      ]
+    );
+    return { ...(transaction as Transaction), id: existingId };
+  }
+
+  // Otherwise INSERT new
   const id = Date.now().toString();
   const createdAt = new Date().toISOString();
 
@@ -262,20 +287,20 @@ export const saveTransaction = async (transaction: Omit<Transaction, 'id' | 'cre
       isRecurring, recurringId
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      id, 
-      transaction.amount, 
-      transaction.categoryId, 
-      transaction.type, 
-      transaction.description, 
-      transaction.note || '', 
-      transaction.date, 
+      id,
+      transaction.amount,
+      transaction.categoryId,
+      transaction.type,
+      transaction.description || null,
+      transaction.note || '',
+      transaction.date,
       createdAt,
       transaction.isRecurring ? 1 : 0,
       transaction.recurringId || null
     ]
   );
 
-  return { id, ...transaction, createdAt };
+  return { id, ...transaction, createdAt } as Transaction;
 };
 
 export const getTransactions = async (): Promise<Transaction[]> => {
